@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>通行分析 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="access.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">通</span>
+      <div class="brand-text">
+        <div class="title">通行分析</div>
+        <div class="subtitle">门禁流水本地同步 · 多维分析 · 层级下钻 · 智能报告（P-DQ-04 / I-04）</div>
+      </div>
+    </div>
+    <nav class="topnav">
+      <a class="btn-ghost" href="/admin" data-perm="docs.view,agents.view,gateway.view,chatlogs.view,stats.view,system.words,system.logs,rbac.view">返回后台</a>
+      <a class="btn-ghost" href="/gov" data-perm="gov.view">导办事项</a>
+      <a class="btn-ghost" href="/apps" data-perm="apps.view">应用广场</a>
+      <a class="btn-ghost" href="/" target="_blank" rel="noopener">对话页</a>
+    </nav>
+  </header>
+
+  <main class="wrap wrap-wide">
+    <section class="card ac-hero">
+      <div class="ac-hero-main">
+        <h3>门禁流水先在本地沉淀，再做分析与下钻</h3>
+        <p>
+          同步任务把门禁平台的出入流水写入本地分析库，看板、校区 / 学院 / 门禁点
+          多维统计、个人与学院排行、异常时段分析都在本地完成；学工号统一脱敏，
+          智能报告只使用聚合指标，不向外部模型发送个人明细。
+        </p>
+      </div>
+      <div class="ac-kpis">
+        <div class="ac-kpi"><b id="ac-total">0</b><span>通行总量</span></div>
+        <div class="ac-kpi"><b id="ac-entries">0</b><span>进入</span></div>
+        <div class="ac-kpi"><b id="ac-exits">0</b><span>离开</span></div>
+        <div class="ac-kpi"><b id="ac-persons">0</b><span>去重人数</span></div>
+        <div class="ac-kpi"><b id="ac-abnormal">0</b><span>异常通行</span></div>
+        <div class="ac-kpi"><b id="ac-peak">-</b><span>高峰时段</span></div>
+      </div>
+      <div class="ac-actions">
+        <button id="ac-sync" class="btn-primary" data-perm="access.manage">同步门禁数据</button>
+        <button id="ac-report" class="btn-ghost" data-perm="access.export">智能分析报告</button>
+        <button id="ac-csv" class="btn-ghost" data-perm="access.export">导出明细 CSV</button>
+      </div>
+    </section>
+
+    <section class="card ac-filter-card">
+      <div class="ac-filter-head">
+        <h3>分析条件</h3>
+        <span class="ac-meta" id="ac-meta">加载中…</span>
+      </div>
+      <div class="ac-filter-grid">
+        <div class="field">
+          <label>开始日期</label>
+          <input type="date" id="ac-from">
+        </div>
+        <div class="field">
+          <label>结束日期</label>
+          <input type="date" id="ac-to">
+        </div>
+        <div class="field">
+          <label>校区</label>
+          <select id="ac-campus"><option value="">全部校区</option></select>
+        </div>
+        <div class="field">
+          <label>学院 / 单位</label>
+          <select id="ac-college"><option value="">全部学院</option></select>
+        </div>
+        <div class="field">
+          <label>门禁点</label>
+          <select id="ac-gate"><option value="">全部门禁点</option></select>
+        </div>
+        <div class="field">
+          <label>身份</label>
+          <select id="ac-role"><option value="">全部身份</option></select>
+        </div>
+        <div class="field">
+          <label>方向</label>
+          <select id="ac-direction">
+            <option value="">进出全部</option>
+            <option value="in">进入</option>
+            <option value="out">离开</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>异常</label>
+          <select id="ac-abnormal-filter">
+            <option value="">全部记录</option>
+            <option value="true">仅异常</option>
+            <option value="false">仅正常</option>
+          </select>
+        </div>
+        <div class="field ac-field-q">
+          <label>人员 / 门禁 / 学院搜索</label>
+          <input type="search" id="ac-q" maxlength="64" placeholder="输入姓名、学工号、学院或门禁点后回车">
+        </div>
+      </div>
+      <div class="ac-filter-actions">
+        <button id="ac-apply" class="btn-primary">应用条件</button>
+        <button id="ac-reset" class="btn-ghost">重置</button>
+        <button id="ac-refresh" class="btn-ghost">刷新看板</button>
+        <span id="ac-msg" class="msg-line"></span>
+      </div>
+    </section>
+
+    <div class="ac-grid">
+      <section class="card ac-span-2">
+        <div class="ac-card-head">
+          <h3>逐日通行趋势</h3>
+          <div class="ac-legend"><span class="ac-dot in"></span>进入<span class="ac-dot out"></span>离开</div>
+        </div>
+        <div class="ac-chart" id="ac-trend"></div>
+      </section>
+      <section class="card">
+        <div class="ac-card-head">
+          <h3>24 小时分布</h3>
+          <span class="ac-hint" id="ac-hour-hint"></span>
+        </div>
+        <div class="ac-hours" id="ac-hourly"></div>
+      </section>
+    </div>
+
+    <div class="ac-grid">
+      <section class="card">
+        <div class="ac-card-head"><h3>校区分布</h3><span class="ac-hint">点击行可下钻</span></div>
+        <div class="ac-bars" id="ac-campus-rows"></div>
+      </section>
+      <section class="card">
+        <div class="ac-card-head"><h3>学院 TOP5</h3><span class="ac-hint">按通行量</span></div>
+        <div class="ac-bars" id="ac-college-rows"></div>
+      </section>
+      <section class="card">
+        <div class="ac-card-head"><h3>门禁点压力</h3><span class="ac-hint">TOP8 · 点击行可下钻</span></div>
+        <div class="ac-bars" id="ac-gate-rows"></div>
+      </section>
+    </div>
+
+    <div class="ac-grid">
+      <section class="card ac-span-2">
+        <div class="ac-card-head"><h3>个人通行 TOP10</h3><span class="ac-hint">学工号已脱敏</span></div>
+        <div class="ac-table-wrap">
+          <table class="ac-table">
+            <thead>
+              <tr><th>排名</th><th>姓名</th><th>身份 / 学院</th><th>学工号</th><th>通行量</th><th>异常</th><th>最近通行</th></tr>
+            </thead>
+            <tbody id="ac-person-rows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="ac-person-empty" hidden>暂无排行数据</div>
+      </section>
+      <section class="card">
+        <div class="ac-card-head"><h3>异常通行</h3><span class="ac-hint" id="ac-abnormal-hint"></span></div>
+        <div class="ac-reasons" id="ac-reason-rows"></div>
+        <div class="ac-subhead">最近异常记录</div>
+        <div class="ac-recent" id="ac-abnormal-recent"></div>
+      </section>
+    </div>
+
+    <section class="card ac-drill-card" id="ac-drill-card" hidden>
+      <div class="ac-card-head">
+        <h3 id="ac-drill-title">下钻分析</h3>
+        <button class="btn-ghost" id="ac-drill-close">收起</button>
+      </div>
+      <div class="ac-drill-kpis" id="ac-drill-kpis"></div>
+      <div class="ac-grid ac-grid-inner">
+        <div>
+          <div class="ac-subhead">学院构成</div>
+          <div class="ac-bars" id="ac-drill-colleges"></div>
+        </div>
+        <div>
+          <div class="ac-subhead">门禁点构成</div>
+          <div class="ac-bars" id="ac-drill-gates"></div>
+        </div>
+        <div>
+          <div class="ac-subhead">人员 TOP5</div>
+          <div class="ac-recent" id="ac-drill-persons"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="ac-card-head">
+        <h3>通行明细 <span class="count" id="ac-event-total">0 条</span></h3>
+        <div class="ac-pager">
+          <button class="btn-ghost" id="ac-prev">上一页</button>
+          <span id="ac-page-label">第 1 页</span>
+          <button class="btn-ghost" id="ac-next">下一页</button>
+        </div>
+      </div>
+      <div class="ac-table-wrap">
+        <table class="ac-table">
+          <thead>
+            <tr><th>时间</th><th>方向</th><th>校区</th><th>学院 / 单位</th><th>门禁点</th><th>人员</th><th>学工号</th><th>异常</th></tr>
+          </thead>
+          <tbody id="ac-event-rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="ac-event-empty" hidden>暂无通行流水。请点击「同步门禁数据」导入演示流水，或调整筛选条件。</div>
+    </section>
+  </main>
+
+  <div class="modal" id="ac-report-modal" hidden>
+    <div class="modal-mask" data-ac-close="1"></div>
+    <div class="modal-box ac-report-box">
+      <div class="modal-head">
+        <h3 id="ac-report-title">通行智能分析报告</h3>
+        <button class="modal-x" data-ac-close="1" title="关闭">×</button>
+      </div>
+      <div class="ac-report-scroll">
+        <pre id="ac-report-content" class="ac-report-pre"></pre>
+      </div>
+      <div class="modal-foot">
+        <span class="msg-line" id="ac-report-msg"></span>
+        <button class="btn-ghost" data-ac-close="1">关闭</button>
+        <button class="btn-primary" id="ac-report-download">下载 Markdown</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="access.js"></script>
+</body>
+</html>

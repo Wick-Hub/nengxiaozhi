@@ -1,0 +1,13 @@
+{
+  "cos": [0.9123, 0.8456, 0.7891, 0.6543, 0.5432],
+  "citationAnswer": "根据资料[2]，一卡通补办需到卡务中心[1]。另外参见[9]和[2]，还有[99]。",
+  "cases": [
+    { "question": "一卡通丢失了怎么办", "role": "本科生" },
+    { "question": "校园网怎么开通", "role": null },
+    { "question": "学校里有火星移民政策吗", "role": "访客" },
+    { "question": "宿舍报修流程", "role": "研究生", "history": [
+      { "role": "user", "content": "你好" },
+      { "role": "assistant", "content": "你好，我是能小智。" }
+    ] }
+  ]
+}

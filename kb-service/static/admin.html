@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>知识管理后台 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">管</span>
+      <div class="brand-text">
+        <div class="title">知识管理后台</div>
+        <div class="subtitle">知识库 · 智能体 · 会话日志 · 系统管理</div>
+      </div>
+    </div>
+    <div class="controls">
+      <a class="btn-ghost" href="/channels" data-perm="channels.view">渠道分身</a>
+      <a class="btn-ghost" href="/apps" data-perm="apps.view">应用广场</a>
+      <a class="btn-ghost" href="/gov" data-perm="gov.view">导办事项</a>
+      <a class="btn-ghost" href="/access" data-perm="access.view">通行分析</a>
+      <a class="btn-ghost" href="/support" data-perm="support.view">客服工作台</a>
+      <a class="btn-ghost" href="/data-center" data-perm="datacenter.view">数据中台</a>
+      <a class="btn-ghost" href="/integrations" data-perm="integrations.view">集成中心</a>
+      <a class="btn-ghost" href="/points" data-perm="points.view">知识点管理</a>
+      <a class="btn-ghost" href="/unrecognized" data-perm="unrecognized.view">未识别问题</a>
+      <a class="btn-ghost" href="/feedback" data-perm="feedback.view">问答反馈</a>
+      <a class="btn-ghost" href="/">← 返回对话</a>
+    </div>
+  </header>
+
+  <main class="wrap wrap-wide">
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="docs" data-perm="docs.view">知识库</button>
+      <button class="tab" data-tab="agents" data-perm="agents.view">智能体管理</button>
+      <button class="tab" data-tab="gateway" data-perm="gateway.view">模型网关</button>
+      <button class="tab" data-tab="logs" data-perm="chatlogs.view">会话日志</button>
+      <button class="tab" data-tab="stats" data-perm="stats.view">统计分析</button>
+      <button class="tab" data-tab="system" data-perm="system.words,system.logs,rbac.view">系统管理</button>
+    </nav>
+
+    <div class="page" id="page-docs">
+    <section class="stats">
+      <div class="stat-chip"><span class="dot" style="--c:#34d399"></span><b id="stat-pub">0</b><span>已发布</span></div>
+      <div class="stat-chip"><span class="dot" style="--c:#fbbf24"></span><b id="stat-pending">0</b><span>待审核</span></div>
+      <div class="stat-chip"><span class="dot" style="--c:#94a3b8"></span><b id="stat-draft">0</b><span>草稿</span></div>
+      <div class="stat-chip"><span class="dot" style="--c:#fb7185"></span><b id="stat-offline">0</b><span>已下线</span></div>
+    </section>
+
+    <section class="card upload-card" data-perm="docs.upload">
+      <h3>上传新文档</h3>
+      <div class="upload-form">
+        <div class="field grow">
+          <label>文件</label>
+          <input type="file" id="file" accept=".md,.txt,.docx,.pdf,.xlsx,.xls,.csv,.json">
+        </div>
+        <div class="field">
+          <label>标题（可空，默认文件名）</label>
+          <input type="text" id="title" placeholder="文档标题">
+        </div>
+        <div class="field">
+          <label>部门</label>
+          <input type="text" id="dept" list="dept-list" placeholder="选择或输入">
+          <datalist id="dept-list"></datalist>
+        </div>
+        <div class="field">
+          <label>知识类型</label>
+          <select id="ktype"></select>
+        </div>
+        <div class="field">
+          <label>入库状态</label>
+          <select id="status">
+            <option value="0">草稿</option>
+            <option value="1">待审核</option>
+            <option value="2">已发布（立即可检索）</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>可见角色</label>
+          <div id="roles" class="role-checks"></div>
+        </div>
+        <div class="field full">
+          <button id="upload" class="btn-primary">上传并入库</button>
+          <span id="upload-msg" class="msg-line"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="table-head">
+        <h3>文档列表 <span id="count" class="count"></span></h3>
+        <div class="filters" id="filters"></div>
+        <select id="f-ktype" class="head-select" title="按知识类型筛选"></select>
+        <select id="f-category" class="head-select" title="按分类筛选"></select>
+        <button id="sync" class="btn-ghost" data-perm="docs.upload" title="扫描 knowledge-base 目录，按文件哈希增量更新">增量同步</button>
+      </div>
+      <!-- 批量操作条（任务 2.7 / M-K-09）：勾选后启用（MySQL 模式） -->
+      <div id="batch-bar" class="batch-bar" hidden>
+        <span class="muted">已选 <b id="batch-count">0</b> 篇</span>
+        <button id="batch-publish" class="op-btn" data-perm="docs.audit" title="审核通过（置为已发布，立即可检索）">批量通过</button>
+        <button id="batch-reject" class="op-btn" data-perm="docs.audit" title="驳回（置为草稿）">批量驳回</button>
+        <button id="batch-move" class="op-btn" data-perm="docs.audit" title="移动到所选分类">批量移动</button>
+        <select id="batch-target-cat" class="head-select" data-perm="docs.audit" title="移动到该分类"></select>
+        <button id="batch-delete" class="op-btn danger" data-perm="docs.delete" title="批量删除（不可恢复）">批量删除</button>
+        <button id="batch-clear" class="op-btn">清空</button>
+        <span id="batch-msg" class="msg-line"></span>
+      </div>
+      <table class="docs">
+        <thead>
+          <tr>
+            <th class="chk"><input type="checkbox" id="chk-all" title="全选本页"></th>
+            <th>#</th><th>标题</th><th>部门</th><th>类型</th><th>状态</th>
+            <th>切片</th><th>大小</th><th>更新时间</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="empty" class="empty" hidden>暂无文档</div>
+    </section>
+
+    <section class="card" data-perm="categories.view">
+      <div class="table-head">
+        <h3>知识分类管理 <span class="count">按「部门 × 知识类型」归类，管理页可重命名 / 排序 / 删除</span></h3>
+      </div>
+      <div id="cat-note" class="cl-note"></div>
+      <div id="cat-form" class="cat-form" data-perm="categories.manage">
+        <div class="field"><label>部门</label><select id="cat-dept"></select></div>
+        <div class="field"><label>知识类型</label><select id="cat-ktype"></select></div>
+        <div class="field"><label>分类名称（可空，默认类型名）</label><input id="cat-name" type="text" placeholder="如：学籍管理"></div>
+        <div class="field"><label>排序号（小在前）</label><input id="cat-sort" type="number" value="0" min="0"></div>
+        <div class="field"><label>&nbsp;</label><button id="cat-new-btn" class="btn-primary">＋ 新建分类</button><span id="cat-msg" class="msg-line"></span></div>
+      </div>
+      <div id="cat-tree" class="cat-tree"></div>
+      <div id="cat-empty" class="empty" hidden>暂无分类</div>
+    </section>
+
+    <section class="card" data-perm="deptperm.view">
+      <div class="table-head">
+        <h3>知识库部门授权 <span class="count">超管为部门联络员分配「部门 × 知识类型」操作位，授权类目内可上传/查看/下载/删除/建子类（M-K-03）</span></h3>
+      </div>
+      <div id="perm-note" class="cl-note"></div>
+      <div id="perm-form" class="cat-form perm-form" data-perm="deptperm.manage">
+        <div class="field"><label>被授权用户</label><select id="perm-user"></select></div>
+        <div class="field"><label>部门</label><select id="perm-dept"></select></div>
+        <div class="field"><label>知识类型</label><select id="perm-ktype"></select></div>
+        <div class="field full perm-flags">
+          <label>操作位</label>
+          <label><input type="checkbox" id="perm-can-upload" value="1"> 上传</label>
+          <label><input type="checkbox" id="perm-can-view" value="1"> 查看</label>
+          <label><input type="checkbox" id="perm-can-download" value="1"> 下载</label>
+          <label><input type="checkbox" id="perm-can-delete" value="1"> 删除</label>
+          <label><input type="checkbox" id="perm-can-create-sub" value="1"> 建子类</label>
+        </div>
+        <div class="field full"><button id="perm-grant-btn" class="btn-primary">＋ 授予</button><span id="perm-msg" class="msg-line"></span></div>
+      </div>
+      <div id="perm-list" class="perm-list"></div>
+      <div id="perm-empty" class="empty" hidden>暂无授权记录</div>
+    </section>
+    </div>
+
+    <div class="page" id="page-logs" hidden>
+      <section class="card">
+        <div class="table-head">
+          <h3>会话日志 <span id="cl-count" class="count"></span></h3>
+          <div class="filters" id="cl-views"></div>
+          <button id="cl-export" class="btn-ghost" data-perm="chatlogs.export" title="按当前筛选条件导出全集 CSV（UTF-8 BOM，Excel 直接打开）">导出 CSV</button>
+        </div>
+
+        <div class="cl-filters">
+          <div class="field"><label>智能体</label><select id="cl-agent"></select></div>
+          <div class="field"><label>渠道</label><select id="cl-channel"></select></div>
+          <div class="field"><label>咨询用户</label><select id="cl-role"></select></div>
+          <div class="field"><label>开始日期</label><input type="date" id="cl-from"></div>
+          <div class="field"><label>结束日期</label><input type="date" id="cl-to"></div>
+          <div class="field grow"><label>关键词（问题 / 回答）</label><input type="search" id="cl-q" placeholder="输入关键词后回车"></div>
+          <div class="field"><label>&nbsp;</label><button id="cl-search" class="btn-primary">查询</button></div>
+          <div class="field"><label>&nbsp;</label><button id="cl-reset" class="btn-ghost">重置</button></div>
+        </div>
+
+        <div id="cl-note" class="cl-note"></div>
+
+        <div class="cl-scroll">
+          <table class="docs cl-table">
+            <thead id="cl-thead"></thead>
+            <tbody id="cl-tbody"></tbody>
+          </table>
+        </div>
+        <div id="cl-empty" class="empty" hidden>暂无日志</div>
+
+        <div class="pager" id="cl-pager"></div>
+      </section>
+    </div>
+    <div class="page" id="page-stats" hidden>
+      <section class="card st-board" id="st-board">
+        <div class="table-head st-head">
+          <h3>统计分析 <span id="st-sub" class="count"></span></h3>
+          <button id="st-export-summary" class="btn-ghost" data-perm="stats.export">导出概览</button>
+          <button id="st-full" class="btn-ghost" title="大屏全屏展示（Esc 退出）">全屏大屏</button>
+        </div>
+
+        <div class="cl-filters st-filters">
+          <div class="field"><label>开始日期</label><input type="date" id="st-from"></div>
+          <div class="field"><label>结束日期</label><input type="date" id="st-to"></div>
+          <div class="field"><label>渠道</label><select id="st-channel"></select></div>
+          <div class="field"><label>助手</label><select id="st-agent"></select></div>
+          <div class="field"><label>咨询用户</label><select id="st-role"></select></div>
+          <div class="field"><label>&nbsp;</label><button id="st-search" class="btn-primary">查询</button></div>
+          <div class="field"><label>&nbsp;</label><button id="st-reset" class="btn-ghost">重置</button></div>
+        </div>
+
+        <div id="st-note" class="cl-note"></div>
+
+        <div class="st-cards" id="st-cards"></div>
+
+        <section class="st-panel">
+          <div class="st-panel-head">
+            <h4>按天趋势</h4>
+            <span id="st-trend-note" class="st-dim"></span>
+          </div>
+          <div class="st-bars" id="st-trend"></div>
+          <div id="st-trend-empty" class="empty" hidden>当前筛选条件下暂无提问</div>
+        </section>
+
+        <div class="st-grid2">
+          <section class="st-panel">
+            <div class="st-panel-head">
+              <h4>渠道统计</h4>
+              <button class="btn-ghost st-mini" data-kind="channels" data-perm="stats.export">导出</button>
+            </div>
+            <div class="st-scroll">
+              <table class="docs st-table">
+                <thead><tr><th>渠道</th><th>提问</th><th>未答</th><th>会话</th><th>应答成功率</th><th>占比</th></tr></thead>
+                <tbody id="st-channels"></tbody>
+              </table>
+            </div>
+            <div id="st-channels-empty" class="empty" hidden>暂无渠道数据</div>
+          </section>
+
+          <section class="st-panel">
+            <div class="st-panel-head">
+              <h4>助手提问统计</h4>
+              <button class="btn-ghost st-mini" data-kind="agents" data-perm="stats.export">导出</button>
+            </div>
+            <div class="st-scroll">
+              <table class="docs st-table">
+                <thead><tr><th>助手</th><th>提问</th><th>未答</th><th>会话</th><th>应答成功率</th><th>占比</th></tr></thead>
+                <tbody id="st-agents"></tbody>
+              </table>
+            </div>
+            <div id="st-agents-empty" class="empty" hidden>暂无助手数据</div>
+          </section>
+        </div>
+
+        <div class="st-grid2">
+          <section class="st-panel">
+            <div class="st-panel-head">
+              <h4>热门知识 <span id="st-kn-count" class="count"></span></h4>
+              <button class="btn-ghost st-mini" data-kind="knowledge" data-perm="stats.export">导出</button>
+            </div>
+            <div class="st-scroll">
+              <table class="docs st-table">
+                <thead><tr><th>文档</th><th>部门 / 类型</th><th>引用</th><th>会话</th><th>占比</th></tr></thead>
+                <tbody id="st-knowledge"></tbody>
+              </table>
+            </div>
+            <div id="st-knowledge-empty" class="empty" hidden>当前筛选条件下没有引用记录</div>
+            <div id="st-kn-note" class="st-dim"></div>
+          </section>
+
+          <section class="st-panel">
+            <div class="st-panel-head">
+              <h4>分类排行 <span id="st-cat-count" class="count"></span></h4>
+              <button class="btn-ghost st-mini" data-kind="categories" data-perm="stats.export">导出</button>
+            </div>
+            <div class="st-scroll">
+              <table class="docs st-table">
+                <thead><tr><th>分类</th><th>引用</th><th>会话</th><th>占比</th></tr></thead>
+                <tbody id="st-categories"></tbody>
+              </table>
+            </div>
+            <div id="st-categories-empty" class="empty" hidden>当前筛选条件下没有分类数据</div>
+          </section>
+        </div>
+
+        <div class="st-grid3">
+          <section class="st-panel">
+            <div class="st-panel-head">
+              <h4>访问设备</h4>
+              <button class="btn-ghost st-mini" data-kind="devices" data-perm="stats.export">导出</button>
+            </div>
+            <div id="st-devices" class="st-bars st-bars-h"></div>
+            <div id="st-devices-empty" class="empty" hidden>暂无设备数据</div>
+            <div id="st-devices-note" class="st-dim"></div>
+          </section>
+
+          <section class="st-panel">
+            <div class="st-panel-head">
+              <h4>咨询情绪</h4>
+              <button class="btn-ghost st-mini" data-kind="sentiments" data-perm="stats.export">导出</button>
+            </div>
+            <div id="st-sentiments" class="st-bars st-bars-h"></div>
+            <div id="st-sentiments-empty" class="empty" hidden>暂无情绪数据</div>
+            <div id="st-sentiments-note" class="st-dim"></div>
+          </section>
+
+          <section class="st-panel">
+            <div class="st-panel-head">
+              <h4>应用使用排行</h4>
+              <button class="btn-ghost st-mini" data-kind="apps" data-perm="stats.export">导出</button>
+            </div>
+            <div id="st-apps" class="st-bars st-bars-h"></div>
+            <div id="st-apps-empty" class="empty" hidden>暂无应用访问数据</div>
+            <div id="st-apps-note" class="st-dim"></div>
+          </section>
+        </div>
+      </section>
+    </div>
+    <div class="page" id="page-agents" hidden>
+      <section class="card">
+        <div class="table-head">
+          <h3>场景智能体 <span class="count">一键搭建校园高频场景助手</span></h3>
+        </div>
+        <div class="scene-grid" id="ag-scenes"></div>
+      </section>
+
+      <section class="card">
+        <div class="table-head">
+          <h3>助手列表 <span id="ag-count" class="count"></span></h3>
+          <div class="filters" id="ag-status-tabs"></div>
+          <input type="search" id="ag-q" class="head-input" placeholder="搜索名称 / 编码 / 描述后回车">
+          <button id="ag-new" class="btn-primary" data-perm="agents.manage">＋ 新建助手</button>
+        </div>
+
+        <div id="ag-note" class="cl-note"></div>
+
+        <div class="cl-scroll">
+          <table class="docs cl-table ag-table">
+            <thead>
+              <tr>
+                <th>头像</th><th>名称 / 编码</th><th>类型</th><th>描述</th>
+                <th>可见角色</th><th>输出</th><th>状态</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="ag-tbody"></tbody>
+          </table>
+        </div>
+        <div id="ag-empty" class="empty" hidden>暂无助手</div>
+      </section>
+
+      <div class="modal" id="ag-modal" hidden>
+        <div class="modal-mask" data-close="1"></div>
+        <div class="modal-box modal-wide">
+          <div class="modal-head">
+            <h3 id="ag-modal-title">新建助手</h3>
+            <button class="modal-x" data-close="1" title="关闭">×</button>
+          </div>
+
+          <div class="ag-tabs" id="ag-tabs">
+            <button class="ag-tab active" data-agt="basic">基础信息</button>
+            <button class="ag-tab" data-agt="prompt">提示词</button>
+            <button class="ag-tab" data-agt="retrieval">检索配置</button>
+            <button class="ag-tab" data-agt="test">对话测试</button>
+          </div>
+
+          <div class="ag-body">
+            <div class="ag-pane" id="ag-pane-basic">
+              <div class="ag-form">
+                <div class="field">
+                  <label>助手名称 *</label>
+                  <input type="text" id="ag-f-name" maxlength="128" placeholder="如：财务助手">
+                </div>
+                <div class="field">
+                  <label>助手编码 *（唯一，小写字母/数字/-/_）</label>
+                  <input type="text" id="ag-f-code" maxlength="64" placeholder="如：scene-finance">
+                </div>
+                <div class="field">
+                  <label>助手类型</label>
+                  <select id="ag-f-type">
+                    <option value="chat">问答（chat）</option>
+                    <option value="db">问数（db）</option>
+                    <option value="guide">导办（guide）</option>
+                    <option value="access">通行（access）</option>
+                    <option value="custom">自定义（custom）</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>头像（emoji 或图片 URL）</label>
+                  <input type="text" id="ag-f-icon" maxlength="255" placeholder="如：💰">
+                </div>
+                <div class="field full">
+                  <label>描述</label>
+                  <input type="text" id="ag-f-desc" maxlength="255" placeholder="一句话说明这个助手负责什么">
+                </div>
+                <div class="field full">
+                  <label>场景引导问题（每行一条，最多 6 条，单条 ≤120 字）</label>
+                  <textarea id="ag-f-guides" rows="3"
+                    placeholder="如：学费什么时候缴纳？&#10;差旅报销需要准备哪些材料？"></textarea>
+                  <div class="hint">门户切换该助手后按这些场景问题推荐；留空则沿用渠道引导问题 / FAQ。</div>
+                </div>
+                <div class="field full">
+                  <label>可见角色</label>
+                  <div id="ag-f-roles" class="role-checks"></div>
+                </div>
+                <div class="field full">
+                  <label>兜底话术（知识库未命中时回复）</label>
+                  <textarea id="ag-f-fallback" rows="2" maxlength="512"
+                    placeholder="如：抱歉，知识库中未找到相关信息，建议联系相关部门或转人工咨询。"></textarea>
+                </div>
+                <div class="field full">
+                  <label>风控话术（命中敏感词时回复）</label>
+                  <textarea id="ag-f-risk" rows="2" maxlength="512"
+                    placeholder="如：抱歉，该问题涉及敏感内容，我无法回答。"></textarea>
+                </div>
+                <div class="field full">
+                  <label>绑定模型（M-A-06，留「全局默认」则沿用平台配置）</label>
+                  <select id="ag-f-model"></select>
+                  <div class="hint" id="ag-f-model-hint"></div>
+                </div>
+                <div class="field">
+                  <label>温度 temperature（留空沿用全局）</label>
+                  <input type="number" id="ag-f-temp" step="0.05" min="0" max="2"
+                    placeholder="留空沿用全局">
+                </div>
+                <div class="field">
+                  <label>topP（留空跟随厂商默认）</label>
+                  <input type="number" id="ag-f-topp" step="0.05" min="0.01" max="1"
+                    placeholder="留空跟随厂商默认">
+                </div>
+                <div class="field">
+                  <label>最大输出 maxTokens（留空沿用全局）</label>
+                  <input type="number" id="ag-f-maxtok" step="1" min="1" max="32768"
+                    placeholder="留空沿用全局">
+                </div>
+                <div class="field">
+                  <label>生成参数生效情况</label>
+                  <div class="hint" id="ag-f-param-hint"></div>
+                </div>
+                <div class="field full">
+                  <label>输出方式</label>
+                  <label class="switch-line"><input type="checkbox" id="ag-f-stream"> 流式输出（关闭则整段返回）</label>
+                </div>
+                <div class="field">
+                  <label>启用状态</label>
+                  <label class="switch-line"><input type="checkbox" id="ag-f-status"> 上架（可被渠道选用）</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="ag-pane" id="ag-pane-prompt" hidden>
+              <div class="ag-form">
+                <div class="field full">
+                  <label>系统提示词（留空则使用平台默认提示词）</label>
+                  <textarea id="ag-f-prompt" rows="12" maxlength="20000"
+                    placeholder="你是「能小智·XX助手」，面向……作答。严格依据检索到的资料，不得编造。"></textarea>
+                  <div class="hint" id="ag-f-prompt-count"></div>
+                </div>
+                <div class="field full">
+                  <button class="btn-ghost" id="ag-prompt-default-toggle">查看平台默认提示词</button>
+                  <pre class="ag-default-prompt" id="ag-f-prompt-default" hidden></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="ag-pane" id="ag-pane-retrieval" hidden>
+              <div class="ag-form">
+                <div class="field">
+                  <label>召回条数（topK）</label>
+                  <input type="number" id="ag-f-topk" min="0" max="50" step="1">
+                  <div class="hint" id="ag-f-topk-hint"></div>
+                </div>
+                <div class="field">
+                  <label>精排候选数（rerankTopn）</label>
+                  <input type="number" id="ag-f-rerank" min="0" max="200" step="1">
+                  <div class="hint" id="ag-f-rerank-hint"></div>
+                </div>
+                <div class="field full">
+                  <label>最低相似度（minScore）</label>
+                  <input type="number" id="ag-f-minscore" min="0" max="1" step="0.01">
+                  <div class="hint">0 表示不设阈值；低于该值的召回切片会被丢弃。</div>
+                </div>
+                <div class="field full">
+                  <label>知识范围 · 部门（不勾选 = 不限）</label>
+                  <div id="ag-f-depts" class="folder-checks"></div>
+                </div>
+                <div class="field full">
+                  <label>知识范围 · 知识类型（不勾选 = 不限）</label>
+                  <div id="ag-f-ktypes" class="folder-checks"></div>
+                </div>
+                <div class="field full">
+                  <div class="cl-note" id="ag-f-ret-note"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ag-pane" id="ag-pane-test" hidden>
+              <div class="ag-form">
+                <div class="field full">
+                  <label>测试问题（≤500 字）</label>
+                  <textarea id="ag-test-q" rows="2" maxlength="500" placeholder="如：校园网怎么开户？"></textarea>
+                </div>
+                <div class="field">
+                  <label>模拟提问者身份</label>
+                  <select id="ag-test-role"></select>
+                </div>
+                <div class="field">
+                  <label>&nbsp;</label>
+                  <button class="btn-primary" id="ag-test-run">开始测试</button>
+                </div>
+                <div class="field full">
+                  <div class="cl-note" id="ag-test-msg"></div>
+                </div>
+                <div class="field full">
+                  <div class="ag-test-result" id="ag-test-result" hidden></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-foot">
+            <span id="ag-modal-msg" class="msg-line"></span>
+            <button class="btn-ghost" data-close="1">取消</button>
+            <button class="btn-primary" id="ag-save">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="page" id="page-system" hidden>
+      <section class="card" id="sw-card" data-perm="system.words">
+        <div class="table-head">
+          <h3>敏感词 / 关键词库 <span id="sw-count" class="count"></span></h3>
+          <select id="sw-kind" class="head-select" title="按类型筛选">
+            <option value="">全部类型</option>
+            <option value="sensitive">敏感词</option>
+            <option value="keyword">关键词</option>
+          </select>
+          <select id="sw-status" class="head-select" title="按状态筛选">
+            <option value="">全部状态</option>
+            <option value="1">启用</option>
+            <option value="0">停用</option>
+          </select>
+          <input type="search" id="sw-q" class="head-input" placeholder="搜索词条后回车">
+        </div>
+
+        <div id="sw-note" class="cl-note"></div>
+
+        <div id="sw-form" class="cat-form">
+          <div class="field"><label>词条 *</label><input id="sw-word" maxlength="128" placeholder="如：违规词"></div>
+          <div class="field">
+            <label>类型</label>
+            <select id="sw-form-kind">
+              <option value="sensitive">敏感词（参与风控）</option>
+              <option value="keyword">关键词（仅管理）</option>
+            </select>
+          </div>
+          <div class="field"><label>分类</label><input id="sw-category" maxlength="32" placeholder="自定义"></div>
+          <div class="field"><label>备注</label><input id="sw-remark" maxlength="255" placeholder="可空"></div>
+          <div class="field"><label>&nbsp;</label><button id="sw-add" class="btn-primary">＋ 新增词条</button><span id="sw-msg" class="msg-line"></span></div>
+        </div>
+
+        <div class="cl-scroll">
+          <table class="docs cl-table">
+            <thead>
+              <tr><th>词条</th><th>类型</th><th>分类</th><th>状态</th><th>备注</th><th>更新时间</th><th>操作</th></tr>
+            </thead>
+            <tbody id="sw-tbody"></tbody>
+          </table>
+        </div>
+        <div id="sw-empty" class="empty" hidden>暂无词条</div>
+        <div class="pager" id="sw-pager"></div>
+      </section>
+
+      <section class="card" id="op-card" data-perm="system.logs">
+        <div class="table-head">
+          <h3>操作日志 <span id="op-count" class="count"></span></h3>
+          <button id="op-refresh" class="btn-ghost">刷新</button>
+        </div>
+
+        <div class="cl-filters">
+          <div class="field"><label>操作人</label><select id="op-user"></select></div>
+          <div class="field"><label>动作</label><select id="op-action"></select></div>
+          <div class="field"><label>开始日期</label><input type="date" id="op-from"></div>
+          <div class="field"><label>结束日期</label><input type="date" id="op-to"></div>
+          <div class="field"><label>&nbsp;</label><button id="op-search" class="btn-primary">查询</button></div>
+          <div class="field"><label>&nbsp;</label><button id="op-reset" class="btn-ghost">重置</button></div>
+        </div>
+
+        <div id="op-note" class="cl-note"></div>
+
+        <div class="cl-scroll">
+          <table class="docs cl-table">
+            <thead>
+              <tr><th>时间</th><th>操作人</th><th>动作</th><th>对象</th><th>对象ID</th><th>IP</th><th>明细</th></tr>
+            </thead>
+            <tbody id="op-tbody"></tbody>
+          </table>
+        </div>
+        <div id="op-empty" class="empty" hidden>暂无操作日志</div>
+        <div class="pager" id="op-pager"></div>
+      </section>
+
+      <!-- 角色权限矩阵（任务 2.9 / M-SYS-01·03）：角色 × 菜单/按钮权限点 -->
+      <section class="card" id="rbac-card" data-perm="rbac.view">
+        <div class="table-head">
+          <h3>角色权限 <span class="count">角色 × 菜单 / 按钮权限点；改动对已登录账号即时生效</span></h3>
+          <button id="rbac-role-new" class="btn-primary" data-perm="rbac.manage">＋ 新建角色</button>
+        </div>
+        <div id="rbac-note" class="rbac-note"></div>
+        <div id="rbac-roles" class="rbac-grid"></div>
+        <div id="rbac-roles-empty" class="rbac-empty" hidden>暂无管理角色</div>
+      </section>
+
+      <!-- 管理员账号（任务 2.9 / M-SYS-03）：新账号必须设密码 -->
+      <section class="card" id="rbac-admin-card" data-perm="rbac.view">
+        <div class="table-head">
+          <h3>管理员账号 <span id="rbac-admin-count" class="count"></span></h3>
+          <button id="rbac-admin-new" class="btn-primary" data-perm="rbac.manage">＋ 新建管理员</button>
+        </div>
+        <div id="rbac-admin-note" class="rbac-note"></div>
+        <div class="cl-scroll">
+          <table class="docs cl-table rbac-table">
+            <thead>
+              <tr><th>学工号</th><th>姓名</th><th>管理角色</th><th>密码</th><th>状态</th><th>最近登录</th><th>操作</th></tr>
+            </thead>
+            <tbody id="rbac-admin-tbody"></tbody>
+          </table>
+        </div>
+        <div id="rbac-admin-empty" class="empty" hidden>暂无管理员账号</div>
+      </section>
+
+      <!-- 角色编辑弹窗 -->
+      <div class="modal" id="rbac-role-modal" hidden>
+        <div class="modal-mask" data-rbac-close="1"></div>
+        <div class="modal-box modal-wide">
+          <div class="modal-head">
+            <h3 id="rbac-role-title">新建角色</h3>
+            <button class="modal-x" data-rbac-close="1" title="关闭">×</button>
+          </div>
+          <div class="rbac-form-grid">
+            <div class="field">
+              <label>角色编码 *（小写字母开头，2–32 位）</label>
+              <input id="rbac-role-code" maxlength="32" placeholder="如：kb_editor">
+            </div>
+            <div class="field">
+              <label>角色名称 *</label>
+              <input id="rbac-role-name" maxlength="32" placeholder="如：知识库编辑">
+            </div>
+          </div>
+          <div class="field full">
+            <label>备注</label>
+            <input id="rbac-role-remark" maxlength="255" placeholder="可空">
+          </div>
+          <div class="field full">
+            <label>权限点（菜单可见性与按钮可用性随此生效）</label>
+            <div class="rbac-perm-groups" id="rbac-role-perms"></div>
+          </div>
+          <div class="modal-foot">
+            <span id="rbac-role-msg" class="msg-line"></span>
+            <button class="btn-ghost" data-rbac-close="1">取消</button>
+            <button class="btn-primary" id="rbac-role-save">保存</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 管理员编辑弹窗 -->
+      <div class="modal" id="rbac-admin-modal" hidden>
+        <div class="modal-mask" data-rbac-close="1"></div>
+        <div class="modal-box rbac-modal-box">
+          <div class="modal-head">
+            <h3 id="rbac-admin-title">新建管理员</h3>
+            <button class="modal-x" data-rbac-close="1" title="关闭">×</button>
+          </div>
+          <div class="rbac-form-grid">
+            <div class="field">
+              <label>学工号 *</label>
+              <input id="rbac-admin-no" maxlength="64" placeholder="如：10001">
+            </div>
+            <div class="field">
+              <label>姓名 *</label>
+              <input id="rbac-admin-name" maxlength="64" placeholder="如：张老师">
+            </div>
+            <div class="field">
+              <label>密码（新建必填，至少 8 位；编辑留空则不修改）</label>
+              <input id="rbac-admin-pass" type="password" maxlength="128" autocomplete="new-password">
+            </div>
+            <div class="field">
+              <label>状态</label>
+              <label class="switch-line"><input type="checkbox" id="rbac-admin-status" checked> 启用（停用后不可登录）</label>
+            </div>
+          </div>
+          <div class="field full">
+            <label>管理角色 *（可多选）</label>
+            <div id="rbac-admin-roles" class="role-checks"></div>
+          </div>
+          <div class="modal-foot">
+            <span id="rbac-admin-msg" class="msg-line"></span>
+            <button class="btn-ghost" data-rbac-close="1">取消</button>
+            <button class="btn-primary" id="rbac-admin-save">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page" id="page-gateway" hidden>
+      <section class="card">
+        <div class="table-head">
+          <h3>模型网关 <span id="gw-count" class="count"></span></h3>
+          <button id="gw-refresh" class="btn-ghost">重新探测</button>
+          <button id="gw-console" class="btn-primary" disabled>打开网关控制台 ↗</button>
+        </div>
+
+        <div id="gw-note" class="cl-note"></div>
+        <div id="gw-list" class="gw-list"></div>
+        <div id="gw-empty" class="empty" hidden>
+          未配置模型接口地址。请在 .env 中把 LLM_BASE_URL 指向网关。
+        </div>
+
+        <p class="gw-fineprint">
+          本页只做<b>无需鉴权</b>的 <code>/healthz</code> 探测，因此
+          <b>不持有网关管理员凭据</b>，也看不到配额 / 用量类指标 —— 那些请打开网关控制台查看。
+        </p>
+        <p class="gw-fineprint">
+          网关控制台带 <code>X-Frame-Options: DENY</code> 与
+          <code>frame-ancestors 'none'</code>，<b>无法内嵌</b>在本页中（其有意安全设计，
+          用于保护内存中的访问令牌），故只提供新标签页入口。
+        </p>
+      </section>
+
+      <section class="card">
+        <div class="table-head">
+          <h3>可用模型 <span id="gw-model-count" class="count"></span></h3>
+          <button id="gw-model-refresh" class="btn-ghost">刷新清单</button>
+        </div>
+
+        <p class="gw-fineprint">
+          本平台的模型<b>全部来自网关</b>：清单取自 <code>GET /models</code>，
+          受业务 Key 的 <code>AllowedModels</code> 白名单过滤。
+          能小智侧不维护第二份模型台账 —— 增删模型请在网关控制台操作。
+        </p>
+
+        <div id="gw-models" class="gw-models"></div>
+        <div id="gw-models-empty" class="empty" hidden>网关未返回任何可用模型。</div>
+        <div id="gw-probe-page" class="ag-test-result md-probe-page" hidden></div>
+      </section>
+
+      <section class="card">
+        <div class="table-head">
+          <h3>接入配置 <span class="count">把模型指向网关所需的三项</span></h3>
+        </div>
+        <div id="gw-guide" class="gw-guide"></div>
+      </section>
+
+      <section class="card">
+        <div class="table-head">
+          <h3>网关错误码对照 <span class="count">问答报错时按 errorDetail.code 定位</span></h3>
+          <button id="gw-hints-toggle" class="btn-ghost">展开</button>
+        </div>
+        <div id="gw-hints" class="gw-hints" hidden></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="admin.js"></script>
+  <script src="agent.js"></script>
+  <script src="chatlog.js"></script>
+  <script src="stats.js"></script>
+  <script src="gateway.js"></script>
+  <script src="rbac.js"></script>
+</body>
+</html>

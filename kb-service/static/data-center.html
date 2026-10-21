@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据中台 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="data-center.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">数</span>
+      <div class="brand-text">
+        <div class="title">数据中台</div>
+        <div class="subtitle">聊天日志/统计上报 · 组织架构与用户同步（I-02 / M-SYS-02）</div>
+      </div>
+    </div>
+    <nav class="topnav">
+      <a class="btn-ghost" href="/admin" data-perm="docs.view,agents.view,gateway.view,chatlogs.view,stats.view,system.words,system.logs,rbac.view">返回后台</a>
+      <a class="btn-ghost" href="/support" data-perm="support.view">客服工作台</a>
+      <a class="btn-ghost" href="/" target="_blank" rel="noopener">对话页</a>
+    </nav>
+  </header>
+
+  <main class="wrap wrap-wide">
+    <section class="card dc-kpis">
+      <div class="dc-kpi"><b id="dc-provider">-</b><span>数据源</span></div>
+      <div class="dc-kpi"><b id="dc-orgs">0</b><span>组织镜像</span></div>
+      <div class="dc-kpi"><b id="dc-users">0</b><span>用户镜像</span></div>
+      <div class="dc-kpi"><b id="dc-last-report">-</b><span>上次上报水位</span></div>
+      <div class="dc-kpi"><b id="dc-last-sync">-</b><span>上次同步</span></div>
+      <div class="dc-kpi"><b id="dc-scheduler">关</b><span>进程内调度</span></div>
+    </section>
+
+    <section class="card dc-actions">
+      <div class="dc-action-block">
+        <h3>聊天日志 / 统计上报</h3>
+        <div class="dc-action-row">
+          <label>日期 <input id="dc-report-date" type="date"></label>
+          <label>类型
+            <select id="dc-report-kind">
+              <option value="all">日志 + 统计</option>
+              <option value="chatlog">仅聊天日志</option>
+              <option value="stats">仅统计</option>
+            </select>
+          </label>
+          <button id="dc-preview" class="btn-ghost">预览</button>
+          <button id="dc-run-report" class="btn-primary">执行上报</button>
+        </div>
+        <p class="dc-hint">同一日期内容未变化时重复上报会记为 skipped，不产生新 revision。</p>
+      </div>
+      <div class="dc-action-block">
+        <h3>组织架构 / 用户同步</h3>
+        <div class="dc-action-row">
+          <button id="dc-sync-inc" class="btn-primary">每日增量</button>
+          <button id="dc-sync-full" class="btn-ghost">每周全量</button>
+          <button id="dc-run-due" class="btn-ghost">补跑到期任务</button>
+          <button id="dc-refresh" class="btn-ghost">刷新</button>
+          <span id="dc-msg" class="msg-line"></span>
+        </div>
+        <p class="dc-hint">按 orgCode / userNo upsert；全量只统计缺项，不删除本地账号。</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="dc-tabs" role="tablist">
+        <button class="dc-tab active" data-panel="reports" role="tab">上报批次</button>
+        <button class="dc-tab" data-panel="jobs" role="tab">任务记录</button>
+        <button class="dc-tab" data-panel="orgs" role="tab">组织镜像</button>
+        <button class="dc-tab" data-panel="users" role="tab">用户镜像</button>
+      </div>
+
+      <div class="dc-panel active" id="dc-panel-reports">
+        <div class="dc-table-wrap">
+          <table class="dc-table">
+            <thead><tr><th>批次</th><th>类型</th><th>日期</th><th>版本</th><th>记录数</th><th>状态</th><th>校验和</th><th>更新时间</th><th>操作</th></tr></thead>
+            <tbody id="dc-report-rows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="dc-report-empty" hidden>尚无上报批次。选择日期后点击「执行上报」。</div>
+      </div>
+
+      <div class="dc-panel" id="dc-panel-jobs">
+        <div class="dc-table-wrap">
+          <table class="dc-table">
+            <thead><tr><th>#</th><th>任务</th><th>模式</th><th>状态</th><th>新增</th><th>更新</th><th>跳过</th><th>失败</th><th>开始</th><th>结束</th></tr></thead>
+            <tbody id="dc-job-rows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="dc-job-empty" hidden>尚无任务记录。</div>
+      </div>
+
+      <div class="dc-panel" id="dc-panel-orgs">
+        <div class="dc-table-wrap">
+          <table class="dc-table">
+            <thead><tr><th>组织编码</th><th>名称</th><th>上级</th><th>路径</th><th>排序</th><th>状态</th><th>同步时间</th></tr></thead>
+            <tbody id="dc-org-rows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="dc-org-empty" hidden>尚无组织镜像。点击「每日增量」后写入。</div>
+      </div>
+
+      <div class="dc-panel" id="dc-panel-users">
+        <div class="dc-table-wrap">
+          <table class="dc-table">
+            <thead><tr><th>学工号</th><th>姓名</th><th>身份</th><th>组织</th><th>邮箱</th><th>状态</th><th>同步时间</th></tr></thead>
+            <tbody id="dc-user-rows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="dc-user-empty" hidden>尚无用户镜像。点击「每日增量」后写入。</div>
+      </div>
+    </section>
+  </main>
+
+  <div class="dc-detail-mask" id="dc-detail-mask" hidden></div>
+  <aside class="dc-detail" id="dc-detail" hidden aria-label="上报详情">
+    <div class="dc-detail-head">
+      <h3 id="dc-detail-title">上报预览</h3>
+      <button id="dc-detail-close" class="btn-ghost">关闭</button>
+    </div>
+    <pre id="dc-detail-body"></pre>
+  </aside>
+
+  <script src="auth.js"></script>
+  <script src="data-center.js"></script>
+</body>
+</html>

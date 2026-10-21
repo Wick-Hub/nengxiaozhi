@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>问答反馈 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="feedback.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body class="fb-page">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">馈</span>
+      <div class="brand-text">
+        <div class="title">问答反馈记录</div>
+        <div class="subtitle">点赞 / 点踩 / 原因追踪 / 处理留痕 / CSV 导出（P-QA-08）</div>
+      </div>
+    </div>
+    <nav class="topnav">
+      <a class="btn-ghost" href="/admin" data-perm="docs.view,agents.view,gateway.view,chatlogs.view,stats.view,system.words,system.logs,rbac.view">返回后台</a>
+      <a class="btn-ghost" href="/unrecognized" data-perm="unrecognized.view">未识别问题</a>
+      <a class="btn-ghost" href="/gov" data-perm="gov.view">导办事项</a>
+      <a class="btn-ghost" href="/" target="_blank" rel="noopener">对话页</a>
+    </nav>
+  </header>
+
+  <main class="wrap wrap-wide">
+    <section class="fb-kpis" id="fb-kpis">
+      <div class="fb-kpi">
+        <span class="fb-kpi-label">反馈总量</span>
+        <b id="fb-kpi-total">—</b>
+        <span class="fb-kpi-hint">当前筛选范围</span>
+      </div>
+      <div class="fb-kpi good">
+        <span class="fb-kpi-label">点赞</span>
+        <b id="fb-kpi-likes">—</b>
+        <span class="fb-kpi-hint">有帮助</span>
+      </div>
+      <div class="fb-kpi bad">
+        <span class="fb-kpi-label">点踩</span>
+        <b id="fb-kpi-dislikes">—</b>
+        <span class="fb-kpi-hint">没帮助</span>
+      </div>
+      <div class="fb-kpi warn">
+        <span class="fb-kpi-label">待处理</span>
+        <b id="fb-kpi-pending">—</b>
+        <span class="fb-kpi-hint">点踩优先跟进</span>
+      </div>
+      <div class="fb-kpi">
+        <span class="fb-kpi-label">好评率</span>
+        <b id="fb-kpi-rate">—</b>
+        <span class="fb-kpi-hint">点赞 / 总反馈</span>
+      </div>
+    </section>
+
+    <section class="card fb-filters">
+      <div class="field">
+        <label for="fb-rating">评价</label>
+        <select id="fb-rating">
+          <option value="">全部评价</option>
+          <option value="1">点赞</option>
+          <option value="-1">点踩</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fb-handled">处理状态</label>
+        <select id="fb-handled">
+          <option value="">全部状态</option>
+          <option value="0">待处理</option>
+          <option value="1">已处理</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fb-from">起始日期</label>
+        <input type="date" id="fb-from">
+      </div>
+      <div class="field">
+        <label for="fb-to">结束日期</label>
+        <input type="date" id="fb-to">
+      </div>
+      <div class="field fb-q-field">
+        <label for="fb-q">关键词</label>
+        <input type="search" id="fb-q" placeholder="问题 / 原因 / 回答摘要">
+      </div>
+      <div class="fb-filter-ops">
+        <button class="btn-primary" id="fb-search">检索</button>
+        <button class="btn-ghost" id="fb-reset">重置</button>
+        <button class="btn-ghost" id="fb-export" data-perm="feedback.manage">导出 CSV</button>
+      </div>
+    </section>
+
+    <p class="fb-note" id="fb-note">加载中…</p>
+
+    <section class="card">
+      <div class="table-head">
+        <h3>反馈清单<span class="count" id="fb-count"></span></h3>
+        <div class="filters"><span class="muted" id="fb-hint"></span></div>
+      </div>
+      <div class="fb-scroll">
+        <table class="docs fb-table">
+          <thead>
+            <tr>
+              <th>反馈 / 时间</th>
+              <th>评价</th>
+              <th>原因 / 补充</th>
+              <th>问题</th>
+              <th>回答摘要</th>
+              <th>身份 / 渠道</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="fb-body"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="fb-empty" hidden>暂无反馈记录</div>
+      <div class="pager" id="fb-pager" hidden>
+        <button class="btn-ghost" id="fb-prev">上一页</button>
+        <span class="muted" id="fb-page-info"></span>
+        <button class="btn-ghost" id="fb-next">下一页</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="modal" id="fb-detail" hidden>
+    <div class="modal-mask" id="fb-detail-mask"></div>
+    <div class="modal-box modal-wide">
+      <div class="modal-head">
+        <h3 id="fb-detail-title">反馈详情</h3>
+        <button class="modal-x" id="fb-detail-close" title="关闭">×</button>
+      </div>
+      <div class="fb-detail-meta" id="fb-detail-meta"></div>
+      <div class="fb-detail-grid">
+        <section class="fb-pane">
+          <h4>用户问题</h4>
+          <p class="fb-question-full" id="fb-detail-question"></p>
+          <h4>回答摘要</h4>
+          <p class="fb-answer" id="fb-detail-answer"></p>
+        </section>
+        <section class="fb-pane">
+          <h4>反馈内容</h4>
+          <div class="fb-detail-feedback" id="fb-detail-feedback"></div>
+          <label class="fb-handle-field" for="fb-handle-note">处理备注
+            <textarea id="fb-handle-note" rows="5" maxlength="512" placeholder="记录跟进结果、知识补充计划等（选填）"></textarea>
+          </label>
+          <p class="fb-msg" id="fb-detail-msg"></p>
+        </section>
+      </div>
+      <div class="fb-modal-ops">
+        <span class="spacer"></span>
+        <button class="btn-ghost" id="fb-detail-close-btn">关闭</button>
+        <button class="btn-ghost" id="fb-reopen" data-perm="feedback.manage">重新打开</button>
+        <button class="btn-primary" id="fb-handle" data-perm="feedback.manage">标记已处理</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="feedback.js"></script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+# 密钥与本地配置
+.env
+.env.local
+
+# 运行时数据
+data/
+uploads/
+models/
+.cache/
+*.log
+
+# 验收工具生成的预览产物
+outputs/
+
+# 部署运行时与证书私钥（任务 5.1）
+logs/
+run/
+deploy/certs/
+deploy/nginx/nengxiaozhi.conf
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/

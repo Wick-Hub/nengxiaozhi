@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客服工作台 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="support.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">客</span>
+      <div class="brand-text">
+        <div class="title">客服工作台</div>
+        <div class="subtitle">转人工接入 · 离线留言 · 情绪预警 · 坐席与分组（P-B-09～13 / M-S-02～06）</div>
+      </div>
+    </div>
+    <nav class="topnav">
+      <a class="btn-ghost" href="/admin" data-perm="docs.view,agents.view,gateway.view,chatlogs.view,stats.view,system.words,system.logs,rbac.view">返回后台</a>
+      <a class="btn-ghost" href="/access" data-perm="access.view">通行分析</a>
+      <a class="btn-ghost" href="/" target="_blank" rel="noopener">对话页</a>
+    </nav>
+    <div class="controls sp-controls">
+      <label class="sp-seat-pick">当前坐席
+        <select id="sp-seat" title="选择本工作台的客服坐席"></select>
+      </label>
+      <span id="sp-ws" class="sp-ws offline" title="工作台实时连接状态">未连接</span>
+    </div>
+  </header>
+
+  <main class="wrap wrap-wide">
+    <section class="card sp-kpis">
+      <div class="sp-kpi"><b id="sp-total">0</b><span>工单总量</span></div>
+      <div class="sp-kpi queued"><b id="sp-queued">0</b><span>待接入</span></div>
+      <div class="sp-kpi active"><b id="sp-active">0</b><span>接待中</span></div>
+      <div class="sp-kpi offline"><b id="sp-offline">0</b><span>离线留言</span></div>
+      <div class="sp-kpi replied"><b id="sp-replied">0</b><span>已回复</span></div>
+      <div class="sp-kpi danger"><b id="sp-negative">0</b><span>负面未决</span></div>
+      <div class="sp-kpi"><b id="sp-closed-today">0</b><span>今日已结束</span></div>
+      <div class="sp-kpi"><b id="sp-online-seats">0/0</b><span>在线坐席</span></div>
+    </section>
+
+    <section class="card sp-filter-card">
+      <div class="sp-filter-head">
+        <h3>筛选条件</h3>
+        <span class="sp-meta" id="sp-meta">加载中…</span>
+      </div>
+      <div class="sp-filter-grid">
+        <div class="field">
+          <label>状态</label>
+          <select id="sp-state"><option value="">全部状态</option></select>
+        </div>
+        <div class="field">
+          <label>情绪</label>
+          <select id="sp-sentiment">
+            <option value="">全部情绪</option>
+            <option value="1">负面</option>
+            <option value="0">正常</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>分组</label>
+          <select id="sp-group"><option value="">全部分组</option></select>
+        </div>
+        <div class="field">
+          <label>坐席</label>
+          <select id="sp-seat-filter"><option value="">全部坐席</option></select>
+        </div>
+        <div class="field">
+          <label>渠道</label>
+          <input id="sp-channel" maxlength="64" placeholder="如 portal-web">
+        </div>
+        <div class="field sp-field-q">
+          <label>关键词</label>
+          <input id="sp-q" type="search" maxlength="64" placeholder="工单号 / 问题 / 学工号 / 坐席，回车搜索">
+        </div>
+      </div>
+      <div class="sp-filter-actions">
+        <button id="sp-apply" class="btn-primary">应用条件</button>
+        <button id="sp-reset" class="btn-ghost">重置</button>
+        <button id="sp-refresh" class="btn-ghost">刷新</button>
+        <span id="sp-msg" class="msg-line"></span>
+      </div>
+    </section>
+
+    <div class="sp-grid">
+      <section class="card sp-list-card">
+        <div class="sp-card-head">
+          <h3>工单列表 <span class="count" id="sp-list-count">0 条</span></h3>
+          <div class="sp-pager">
+            <button class="btn-ghost" id="sp-prev">上一页</button>
+            <span id="sp-page-label">第 1 页</span>
+            <button class="btn-ghost" id="sp-next">下一页</button>
+          </div>
+        </div>
+        <div id="sp-ticket-list" class="sp-ticket-list"></div>
+        <div class="empty" id="sp-ticket-empty" hidden>当前条件下暂无工单。用户从对话页点击「转人工」后会实时出现在这里。</div>
+      </section>
+
+      <section class="card sp-chat-card">
+        <div class="sp-thread-head">
+          <div>
+            <h3 id="sp-thread-title">选择一个工单</h3>
+            <div class="sp-thread-sub" id="sp-thread-sub">左侧工单列表会实时刷新</div>
+          </div>
+          <div class="sp-thread-badges">
+            <span class="sp-badge" id="sp-thread-state" hidden></span>
+            <span class="sp-badge danger" id="sp-thread-sentiment" hidden>负面</span>
+          </div>
+        </div>
+
+        <div class="sp-ticket-meta" id="sp-ticket-meta" hidden>
+          <span id="sp-meta-user"></span>
+          <span id="sp-meta-group"></span>
+          <span id="sp-meta-channel"></span>
+          <span id="sp-meta-time"></span>
+        </div>
+
+        <div class="sp-thread" id="sp-thread">
+          <div class="sp-thread-empty" id="sp-thread-empty">从左侧选择工单后，这里显示完整会话。坐席回复、接入与结束操作都会写入工单记录。</div>
+        </div>
+
+        <div class="sp-ticket-ops" id="sp-ticket-ops" hidden>
+          <button id="sp-claim" class="btn-primary">接入工单</button>
+          <select id="sp-assign-group" class="sp-mini-select" title="转交分组"></select>
+          <select id="sp-assign-seat" class="sp-mini-select" title="转交坐席"></select>
+          <button id="sp-assign" class="btn-ghost">转交</button>
+          <button id="sp-close" class="btn-ghost danger-text">结束会话</button>
+        </div>
+
+        <div class="sp-composer" id="sp-composer" hidden>
+          <textarea id="sp-reply" rows="2" maxlength="2000" placeholder="输入回复内容，Ctrl + Enter 发送"></textarea>
+          <div class="sp-composer-foot">
+            <span class="sp-hint" id="sp-action-msg"></span>
+            <button id="sp-send" class="btn-send">发送回复</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="sp-grid sp-grid-lower">
+      <section class="card">
+        <div class="sp-card-head">
+          <h3 id="sp-group-form-title">新建客服分组</h3>
+          <span class="sp-hint">按渠道编码匹配转人工请求</span>
+        </div>
+        <div class="sp-form">
+          <div class="field"><label>分组名称</label><input id="spg-name" maxlength="32" placeholder="如 综合客服组"></div>
+          <div class="field"><label>渠道编码</label><input id="spg-channels" maxlength="255" placeholder="逗号分隔；留空表示兜底分组"></div>
+          <div class="field"><label>分组说明</label><input id="spg-desc" maxlength="255" placeholder="承接哪些事务"></div>
+          <div class="field"><label>状态</label>
+            <select id="spg-status"><option value="1">启用</option><option value="0">停用</option></select>
+          </div>
+          <div class="sp-form-ops">
+            <button id="spg-submit" class="btn-primary">新建分组</button>
+            <button id="spg-cancel" class="btn-ghost" hidden>取消编辑</button>
+            <span class="sp-hint" id="spg-msg"></span>
+          </div>
+        </div>
+        <div class="sp-rows" id="sp-group-rows"></div>
+      </section>
+
+      <section class="card">
+        <div class="sp-card-head">
+          <h3 id="sp-seat-form-title">新增客服坐席</h3>
+          <span class="sp-hint">工作台连接时自动上线</span>
+        </div>
+        <div class="sp-form">
+          <div class="field"><label>学工号</label><input id="sps-user" maxlength="64" placeholder="与登录账号一致"></div>
+          <div class="field"><label>坐席昵称</label><input id="sps-name" maxlength="32" placeholder="如 客服·小智"></div>
+          <div class="field"><label>所属分组</label><select id="sps-group"></select></div>
+          <div class="field"><label>最大接待数</label><input id="sps-max" type="number" min="1" max="20" value="5"></div>
+          <div class="field sp-check"><label><input id="sps-online" type="checkbox"> 立即上线</label></div>
+          <div class="sp-form-ops">
+            <button id="sps-submit" class="btn-primary">新增坐席</button>
+            <button id="sps-cancel" class="btn-ghost" hidden>取消编辑</button>
+            <span class="sp-hint" id="sps-msg"></span>
+          </div>
+        </div>
+        <div class="sp-rows" id="sp-seat-rows"></div>
+      </section>
+    </div>
+
+    <section class="card">
+      <div class="sp-card-head">
+        <h3>人工回复日志 <span class="count" id="sp-log-count">0 条</span></h3>
+        <span class="sp-hint">按工单聚合坐席回复，最近在前（M-S-05）</span>
+      </div>
+      <div class="sp-table-wrap">
+        <table class="sp-table">
+          <thead>
+            <tr><th>工单号</th><th>问题</th><th>用户</th><th>坐席</th><th>回复数</th><th>最近回复</th><th>状态</th></tr>
+          </thead>
+          <tbody id="sp-log-rows"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="sp-log-empty" hidden>暂无坐席回复记录。</div>
+    </section>
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="support.js"></script>
+</body>
+</html>

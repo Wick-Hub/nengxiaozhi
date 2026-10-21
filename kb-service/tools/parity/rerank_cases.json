@@ -1,0 +1,15 @@
+{
+  "cases": [
+    { "query": "一卡通丢失了怎么办", "first": 20, "topK": 5 },
+    { "query": "校园网怎么开通", "first": 20, "topK": 5 },
+    { "query": "上网资费套餐多少钱", "first": 20, "topK": 5 },
+    { "query": "学生宿舍报修流程", "first": 20, "topK": 5 },
+    { "query": "图书馆开放时间", "first": 20, "topK": 5 },
+    { "query": "考试安排与成绩查询", "first": 20, "topK": 5 },
+    { "query": "校园卡充值方式", "first": 20, "topK": 5 },
+    { "query": "网络故障怎么报修", "first": 20, "topK": 5 },
+    { "query": "新生入学需要准备什么材料", "first": 20, "topK": 5 },
+    { "query": "教工邮箱申请", "first": 20, "topK": 5 },
+    { "query": "上网资费", "first": 3, "topK": 5 }
+  ]
+}

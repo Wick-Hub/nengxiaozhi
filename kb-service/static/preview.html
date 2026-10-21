@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文档预览与对比 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="preview.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">览</span>
+      <div class="brand-text">
+        <div class="title">文档预览与对比</div>
+        <div class="subtitle">原文 ↔ 切片 · 关键词检索</div>
+      </div>
+    </div>
+    <div class="controls">
+      <a class="btn-ghost" href="/admin">← 知识管理</a>
+      <a class="btn-ghost" href="/">返回对话</a>
+    </div>
+  </header>
+
+  <main class="wrap-wide">
+    <section class="card doc-head" id="doc-head" hidden>
+      <div class="doc-head-main">
+        <h3 id="doc-title">—</h3>
+        <div class="doc-tags" id="doc-tags"></div>
+      </div>
+      <div class="doc-actions">
+        <a class="btn-ghost" id="open-raw" href="#" target="_blank" rel="noopener" hidden>打开原件</a>
+        <a class="btn-ghost" id="download-raw" href="#" hidden>下载原件</a>
+        <!-- 审核流（任务 2.7 / M-K-05）：预览中直接审核通过/驳回 -->
+        <button class="btn-ghost" id="audit-approve" data-perm="docs.audit" hidden title="审核通过（置为已发布，立即可检索）">✓ 审核通过</button>
+        <button class="btn-ghost" id="audit-reject" data-perm="docs.audit" hidden title="驳回（置为草稿，不再可检索）">✕ 驳回</button>
+        <span id="audit-msg" class="msg-line"></span>
+      </div>
+    </section>
+
+    <section class="card images-strip" id="images-strip" hidden>
+      <div class="strip-head">
+        <h3>图片 <span class="count" id="images-count"></span></h3>
+        <span class="pane-meta" id="images-meta"></span>
+      </div>
+      <div class="thumbs" id="images-body"></div>
+    </section>
+
+    <section class="card toolbar" id="toolbar" hidden>
+      <div class="field grow">
+        <label for="q">关键词检索（空格分隔多个，需全部命中）</label>
+        <input type="search" id="q" placeholder="如：校园网 报修" autocomplete="off">
+      </div>
+      <button class="btn-primary" id="search">检索</button>
+      <button class="btn-ghost" id="clear">清空</button>
+      <label class="switch"><input type="checkbox" id="only-hit"> 只看命中</label>
+      <div class="hit-stat" id="hit-stat"></div>
+      <div class="nav-hits">
+        <button class="btn-ghost" id="prev-hit" title="上一处命中（Shift+↑）">↑</button>
+        <button class="btn-ghost" id="next-hit" title="下一处命中（Shift+↓）">↓</button>
+      </div>
+    </section>
+
+    <section class="split" id="split" hidden>
+      <div class="card pane">
+        <div class="pane-head">
+          <h3>原文</h3>
+          <span class="pane-meta" id="text-meta"></span>
+        </div>
+        <div class="pane-body" id="text-body"><div class="empty">加载中…</div></div>
+      </div>
+      <div class="card pane">
+        <div class="pane-head">
+          <h3>切片</h3>
+          <span class="pane-meta" id="chunk-meta"></span>
+        </div>
+        <div class="pane-body" id="chunk-body"><div class="empty">加载中…</div></div>
+      </div>
+    </section>
+
+    <section class="card" id="picker" hidden>
+      <h3>选择要预览的文档 <span class="count" id="picker-count"></span></h3>
+      <table class="docs">
+        <thead>
+          <tr><th>#</th><th>标题</th><th>部门</th><th>类型</th><th>状态</th><th>切片</th><th>操作</th></tr>
+        </thead>
+        <tbody id="picker-body"></tbody>
+      </table>
+      <div class="empty" id="picker-empty" hidden>暂无文档</div>
+    </section>
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="preview.js"></script>
+</body>
+</html>

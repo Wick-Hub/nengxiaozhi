@@ -1,0 +1,59 @@
+# kb-service 生产 Nginx 配置模板（任务 5.1）
+# 用 deploy/nginx/render_nginx_conf.py 渲染后再交给 Nginx，不要直接使用。
+# TLS 终结在 Nginx，上游只监听 127.0.0.1，不直接暴露公网。
+worker_processes auto;
+
+events {
+    worker_connections 2048;
+}
+
+http {
+    include mime.types;
+    default_type application/octet-stream;
+    sendfile on;
+    tcp_nopush on;
+    keepalive_timeout 65;
+    server_tokens off;
+    client_max_body_size 64m;
+
+    server {
+        listen __HTTP_PORT__;
+        server_name __SERVER_NAME__;
+        return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen __HTTPS_PORT__ ssl http2;
+        server_name __SERVER_NAME__;
+
+        ssl_certificate "__CERT_DIR__/fullchain.pem";
+        ssl_certificate_key "__CERT_DIR__/privkey.pem";
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers HIGH:!aNULL:!MD5:!3DES;
+        ssl_prefer_server_ciphers off;
+        ssl_session_cache shared:SSL:10m;
+        ssl_session_timeout 1d;
+        ssl_session_tickets off;
+
+        # SSE / 流式回答依赖这两项，不能被 Nginx 攒批
+        proxy_buffering off;
+        proxy_cache off;
+        add_header X-Accel-Buffering no always;
+        add_header Strict-Transport-Security "max-age=31536000" always;
+        add_header X-Content-Type-Options nosniff always;
+        add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+        location / {
+            proxy_pass http://__UPSTREAM__;
+            proxy_http_version 1.1;
+            # $http_host 保留客户端端口；$host 会丢端口，影响同源判断与重定向
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_connect_timeout 10s;
+            proxy_read_timeout 300s;
+            proxy_send_timeout 300s;
+        }
+    }
+}

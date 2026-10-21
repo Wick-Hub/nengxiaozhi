@@ -1,0 +1,153 @@
+/* 文档预览与对比页（任务 1.11）
+ * 复用 admin.css 的深色主题令牌与 card/topbar/btn 基础样式，这里只补对比视图布局。
+ */
+
+.wrap-wide {
+  max-width: 1560px;
+  margin: 24px auto;
+  padding: 0 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---- 文档头部 ---- */
+.doc-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+}
+.doc-head h3 { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.doc-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.doc-tags .tag {
+  display: inline-block; padding: 2px 10px; border-radius: 999px;
+  font-size: 12px; background: rgba(146,168,255,.10); color: var(--text-dim);
+  border: 1px solid var(--border); white-space: nowrap;
+}
+.doc-actions { display: flex; gap: 8px; flex: 0 0 auto; align-items: center; }
+/* 审核流（任务 2.7 / M-K-05）：审核按钮的反馈行 */
+.doc-actions .msg-line { font-size: 12px; color: var(--text-dim); }
+.doc-actions .msg-line.ok { color: var(--green); }
+.doc-actions .msg-line.err { color: var(--red); }
+
+/* ---- 图片条（任务 1.10）---- */
+.images-strip { padding: 16px 22px; }
+.strip-head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 10px; margin-bottom: 12px;
+}
+.strip-head h3 { margin: 0; font-size: 15px; font-weight: 700; }
+.strip-head .count { font-size: 12px; color: var(--text-muted); font-weight: 400; margin-left: 4px; }
+.thumbs { display: flex; flex-wrap: wrap; gap: 12px; max-height: 260px; overflow: auto; }
+.thumb {
+  margin: 0; width: 176px;
+  border: 1px solid var(--border); border-radius: 12px; padding: 8px;
+  background: rgba(22,30,53,.55);
+}
+.thumb .thumb-box {
+  display: flex; align-items: center; justify-content: center;
+  height: 110px; border-radius: 8px; overflow: hidden;
+  background: rgba(146,168,255,.06); border: 1px solid var(--border);
+}
+.thumb .thumb-box img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+.thumb.broken .thumb-box { color: var(--text-muted); font-size: 12px; }
+.thumb figcaption {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin-top: 6px; font-size: 11px; color: var(--text-muted);
+}
+.thumb figcaption .tag {
+  display: inline-block; padding: 1px 8px; border-radius: 999px;
+  background: rgba(91,140,255,.18); color: #cfe0ff; border: 1px solid rgba(91,140,255,.35);
+}
+.thumb-refs { margin-top: 4px; font-size: 11px; color: var(--text-muted); }
+
+/* ---- 工具条 ---- */
+.toolbar {
+  display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; padding: 16px 22px;
+}
+.toolbar .field.grow { flex: 1 1 320px; }
+.toolbar label { font-size: 12.5px; color: var(--text-dim); }
+.toolbar .btn-primary, .toolbar .btn-ghost { padding: 9px 16px; font-size: 14px; }
+.switch {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text-dim); cursor: pointer; padding-bottom: 8px; user-select: none;
+}
+.switch input { accent-color: var(--brand-1); }
+.hit-stat { font-size: 13px; color: var(--text-dim); padding-bottom: 9px; white-space: nowrap; }
+.hit-stat b { color: var(--accent); font-weight: 700; }
+.nav-hits { display: flex; gap: 4px; padding-bottom: 6px; }
+.nav-hits .btn-ghost { padding: 5px 12px; line-height: 1; }
+
+/* ---- 左右分栏 ---- */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+@media (max-width: 1100px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.pane { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
+.pane-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  padding: 13px 18px; border-bottom: 1px solid var(--border);
+  background: rgba(146,168,255,.05);
+}
+.pane-head h3 { margin: 0; font-size: 14px; font-weight: 700; }
+.pane-meta { font-size: 12px; color: var(--text-muted); }
+.pane-body {
+  padding: 16px 18px;
+  max-height: calc(100vh - 380px);
+  min-height: 260px;
+  overflow: auto;
+  font-size: 13.5px;
+  line-height: 1.75;
+  word-break: break-word;
+  scrollbar-width: thin; scrollbar-color: rgba(146,168,255,.28) transparent;
+}
+.pane-body::-webkit-scrollbar { width: 8px; }
+.pane-body::-webkit-scrollbar-thumb { background: rgba(146,168,255,.24); border-radius: 8px; }
+#text-body { white-space: pre-wrap; font-family: ui-monospace, Consolas, "Courier New", monospace; }
+
+/* ---- 命中高亮 ---- */
+mark.hit {
+  background: rgba(251,191,36,.28); color: #fde68a; border-radius: 3px;
+  padding: 0 1px; scroll-margin: 120px;
+}
+mark.hit.active { background: #fb923c; color: #fff; box-shadow: 0 0 0 2px rgba(251,146,60,.35); }
+
+/* ---- 切片卡片 ---- */
+.chunk {
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 13px 15px; margin-bottom: 12px;
+  background: rgba(22,30,53,.55); transition: border-color .14s, transform .14s;
+}
+.chunk:hover { border-color: var(--border-strong); }
+.chunk.dim { opacity: .45; }
+.chunk-head {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin-bottom: 8px; font-size: 12px; color: var(--text-muted);
+}
+.chunk-seq {
+  display: inline-block; padding: 1px 8px; border-radius: 7px;
+  background: rgba(91,140,255,.18); color: #cfe0ff; font-weight: 700;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.chunk-type {
+  display: inline-block; padding: 1px 8px; border-radius: 7px;
+  background: rgba(146,168,255,.10); color: var(--text-dim); font-family: ui-monospace, Consolas, monospace;
+}
+.chunk-title-path { flex: 1 1 100%; color: var(--accent); font-size: 12px; word-break: break-all; }
+.chunk-text { white-space: pre-wrap; font-size: 13.5px; line-height: 1.75; color: var(--text-dim); }
+.chunk-hint { font-size: 12px; color: var(--green); }
+
+/* ---- 切片内嵌图 ---- */
+.chunk-imgs { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 8px; }
+.chunk-img {
+  display: block; width: 96px; height: 66px; overflow: hidden;
+  border: 1px solid var(--border); border-radius: 8px; background: rgba(22,30,53,.6);
+}
+.chunk-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.pane-body .empty { padding: 40px 0; }

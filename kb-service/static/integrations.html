@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>集成中心 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="integrations.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">集</span>
+      <div class="brand-text">
+        <div class="title">集成中心</div>
+        <div class="subtitle">本地大模型 · MCP 服务 · 第三方智能体（C-05 / M-A-07·10）</div>
+      </div>
+    </div>
+    <nav class="topnav">
+      <a class="btn-ghost" href="/admin" data-perm="docs.view,agents.view,gateway.view,chatlogs.view,stats.view,system.words,system.logs,rbac.view">返回后台</a>
+      <a class="btn-ghost" href="/data-center" data-perm="datacenter.view">数据中台</a>
+      <a class="btn-ghost" href="/" target="_blank" rel="noopener">对话页</a>
+    </nav>
+  </header>
+
+  <main class="wrap wrap-wide">
+    <section class="card ig-kpis">
+      <div class="ig-kpi"><b id="ig-provider">-</b><span>问答模型来源</span></div>
+      <div class="ig-kpi"><b id="ig-active">-</b><span>当前本地模型</span></div>
+      <div class="ig-kpi"><b id="ig-local-count">0</b><span>本地模型</span></div>
+      <div class="ig-kpi"><b id="ig-mcp-count">0</b><span>MCP 服务</span></div>
+      <div class="ig-kpi"><b id="ig-agent-count">0</b><span>第三方智能体</span></div>
+      <div class="ig-kpi"><b id="ig-test-mode">-</b><span>连通性测试</span></div>
+    </section>
+
+    <section class="card ig-hero">
+      <div class="ig-hero-text">
+        <h3>接入说明</h3>
+        <p id="ig-hint">正在读取配置…</p>
+      </div>
+      <div class="ig-hero-actions">
+        <button id="ig-seed" class="btn-ghost" data-perm="integrations.manage">写入示例配置</button>
+        <button id="ig-refresh" class="btn-ghost">刷新</button>
+        <span id="ig-msg" class="msg-line"></span>
+      </div>
+    </section>
+
+    <section class="card ig-body">
+      <div class="ig-tabs" role="tablist">
+        <button class="ig-tab active" data-tab="local" role="tab">本地模型</button>
+        <button class="ig-tab" data-tab="mcp" role="tab">MCP 服务</button>
+        <button class="ig-tab" data-tab="agent" role="tab">第三方智能体</button>
+      </div>
+
+      <div class="ig-panel active" id="ig-panel-local">
+        <div class="ig-toolbar">
+          <h3>本地 OpenAI 兼容模型</h3>
+          <button id="ig-add-local" class="btn-primary" data-perm="integrations.manage">新增本地模型</button>
+        </div>
+        <p class="ig-note">「当前启用」的模型在 <code>LLM_PROVIDER=local</code> 时直接承接问答；网关模式下仅作为离线/直连部署配置。</p>
+        <div class="ig-table-wrap">
+          <table class="ig-table">
+            <thead><tr><th>名称 / 编码</th><th>接口地址</th><th>模型</th><th>密钥</th><th>状态</th><th>当前启用</th><th>最近测试</th><th>操作</th></tr></thead>
+            <tbody id="ig-local-rows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="ig-local-empty" hidden>尚无本地模型。点击「新增本地模型」或「写入示例配置」。</div>
+      </div>
+
+      <div class="ig-panel" id="ig-panel-mcp">
+        <div class="ig-toolbar">
+          <h3>MCP 服务配置</h3>
+          <button id="ig-add-mcp" class="btn-primary" data-perm="integrations.manage">新增 MCP 服务</button>
+        </div>
+        <p class="ig-note">HTTP 传输可执行 <code>initialize</code> + <code>tools/list</code> 探测；SSE / stdio 当前只保存配置，不在管理进程内拉起子进程。</p>
+        <div class="ig-table-wrap">
+          <table class="ig-table">
+            <thead><tr><th>名称 / 编码</th><th>传输</th><th>地址 / 命令</th><th>工具数</th><th>状态</th><th>最近测试</th><th>操作</th></tr></thead>
+            <tbody id="ig-mcp-rows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="ig-mcp-empty" hidden>尚无 MCP 服务。点击「新增 MCP 服务」或「写入示例配置」。</div>
+      </div>
+
+      <div class="ig-panel" id="ig-panel-agent">
+        <div class="ig-toolbar">
+          <h3>第三方智能体应用</h3>
+          <button id="ig-add-agent" class="btn-primary" data-perm="integrations.manage">新增第三方智能体</button>
+        </div>
+        <p class="ig-note">已内置 Dify、Coze 与自定义 Webhook 三种适配器；测试会真实发送一条「请回复：pong」。</p>
+        <div class="ig-table-wrap">
+          <table class="ig-table">
+            <thead><tr><th>名称 / 编码</th><th>类型</th><th>接口地址</th><th>应用 ID</th><th>凭证</th><th>状态</th><th>最近测试</th><th>操作</th></tr></thead>
+            <tbody id="ig-agent-rows"></tbody>
+          </table>
+        </div>
+        <div class="empty" id="ig-agent-empty" hidden>尚无第三方智能体。点击「新增第三方智能体」或「写入示例配置」。</div>
+      </div>
+    </section>
+  </main>
+
+  <div class="ig-mask" id="ig-form-mask" hidden></div>
+  <aside class="ig-drawer" id="ig-form" hidden aria-label="集成配置">
+    <div class="ig-drawer-head">
+      <h3 id="ig-form-title">新增</h3>
+      <button id="ig-form-close" class="btn-ghost">关闭</button>
+    </div>
+    <form id="ig-form-el" class="ig-form" autocomplete="off">
+      <div id="ig-fields-local" hidden>
+        <label>编码 <input id="ig-local-code" maxlength="64" placeholder="local-qwen"></label>
+        <label>名称 <input id="ig-local-name" maxlength="128" placeholder="本地 Qwen2.5-7B"></label>
+        <label>接口地址 <input id="ig-local-url" maxlength="512" placeholder="http://127.0.0.1:8001/v1"></label>
+        <label>模型名 <input id="ig-local-model" maxlength="128" placeholder="qwen2.5-7b-instruct"></label>
+        <label>API Key <input id="ig-local-key" type="password" maxlength="512" placeholder="可选；留空保持不变"></label>
+        <div class="ig-form-row">
+          <label>超时（秒） <input id="ig-local-timeout" type="number" min="1" max="600" value="30"></label>
+          <label>状态
+            <select id="ig-local-status"><option value="1">启用</option><option value="0">停用</option></select>
+          </label>
+        </div>
+        <label class="ig-check" id="ig-local-active-wrap"><input id="ig-local-active" type="checkbox"> 创建后设为当前启用</label>
+        <label>备注 <input id="ig-local-remark" maxlength="255"></label>
+      </div>
+
+      <div id="ig-fields-mcp" hidden>
+        <label>编码 <input id="ig-mcp-code" maxlength="64" placeholder="campus-kb-tools"></label>
+        <label>名称 <input id="ig-mcp-name" maxlength="128" placeholder="校园知识检索 MCP"></label>
+        <label>传输方式 <select id="ig-mcp-transport"><option value="http">HTTP</option><option value="sse">SSE</option><option value="stdio">stdio</option></select></label>
+        <label id="ig-mcp-endpoint-wrap">Endpoint <input id="ig-mcp-endpoint" maxlength="512" placeholder="http://127.0.0.1:9001/mcp"></label>
+        <div id="ig-mcp-stdio-wrap" hidden>
+          <label>启动命令 <input id="ig-mcp-command" maxlength="255" placeholder="python"></label>
+          <label>参数（每行一个） <textarea id="ig-mcp-args" rows="3" placeholder="-m&#10;mcp_server.schedule"></textarea></label>
+        </div>
+        <label>自定义 Header <textarea id="ig-mcp-headers" rows="3" placeholder="每行一条：X-Token: abc&#10;留空保持不变"></textarea></label>
+        <label class="ig-check"><input id="ig-mcp-clear-headers" type="checkbox"> 清空已配置的 Header</label>
+        <div class="ig-form-row">
+          <label>状态
+            <select id="ig-mcp-status"><option value="1">启用</option><option value="0">停用</option></select>
+          </label>
+        </div>
+        <p class="ig-form-hint" id="ig-mcp-header-hint"></p>
+        <label>备注 <input id="ig-mcp-remark" maxlength="255"></label>
+      </div>
+
+      <div id="ig-fields-agent" hidden>
+        <label>编码 <input id="ig-agent-code" maxlength="64" placeholder="dify-campus"></label>
+        <label>名称 <input id="ig-agent-name" maxlength="128" placeholder="Dify 校园助手"></label>
+        <label>类型 <select id="ig-agent-kind"><option value="dify">Dify 应用</option><option value="coze">Coze 智能体</option><option value="webhook">自定义 Webhook</option></select></label>
+        <label>接口地址 <input id="ig-agent-url" maxlength="512" placeholder="https://dify.example.edu/v1"></label>
+        <label>应用 ID <input id="ig-agent-remote" maxlength="128" placeholder="Coze 必填：bot_id"></label>
+        <label>Token / API Key <input id="ig-agent-token" type="password" maxlength="512" placeholder="留空保持不变"></label>
+        <div class="ig-form-row">
+          <label>状态
+            <select id="ig-agent-status"><option value="1">启用</option><option value="0">停用</option></select>
+          </label>
+        </div>
+        <label>备注 <input id="ig-agent-remark" maxlength="255"></label>
+      </div>
+
+      <div class="ig-form-actions">
+        <span id="ig-form-msg" class="msg-line"></span>
+        <button type="button" id="ig-form-cancel" class="btn-ghost">取消</button>
+        <button type="submit" id="ig-form-save" class="btn-primary">保存</button>
+      </div>
+    </form>
+  </aside>
+
+  <div class="ig-mask" id="ig-result-mask" hidden></div>
+  <aside class="ig-drawer" id="ig-result" hidden aria-label="测试结果">
+    <div class="ig-drawer-head">
+      <h3 id="ig-result-title">测试结果</h3>
+      <button id="ig-result-close" class="btn-ghost">关闭</button>
+    </div>
+    <pre id="ig-result-body"></pre>
+  </aside>
+
+  <script src="auth.js"></script>
+  <script src="integrations.js"></script>
+</body>
+</html>

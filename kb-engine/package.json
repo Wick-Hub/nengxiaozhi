@@ -1,0 +1,23 @@
+{
+  "name": "kb-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "能小智知识库原型引擎：解析 → 切片 → 向量化 → 混合检索",
+  "scripts": {
+    "ingest": "node src/ingest.js",
+    "ask": "node src/query.js",
+    "web": "node src/web/server.js",
+    "sync": "node src/sync.js",
+    "gen:xlsx": "node scripts/gen-xlsx-sample.mjs"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.0.0",
+    "cheerio": "^1.0.0",
+    "mammoth": "^1.9.0",
+    "mysql2": "^3.24.5",
+    "pdf-parse": "^1.1.1",
+    "undici": "^7.0.0",
+    "xlsx": "^0.18.5"
+  }
+}

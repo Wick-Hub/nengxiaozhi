@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>知识管理后台 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">管</span>
+      <div class="brand-text">
+        <div class="title">知识管理后台</div>
+        <div class="subtitle">文档上传 · 审核 · 发布 · 下线</div>
+      </div>
+    </div>
+    <div class="controls">
+      <a class="btn-ghost" href="/">← 返回对话</a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card upload-card">
+      <h3>上传新文档</h3>
+      <div class="upload-form">
+        <div class="field grow">
+          <label>文件</label>
+          <input type="file" id="file" accept=".md,.txt,.docx,.pdf,.xlsx,.xls,.csv,.json">
+        </div>
+        <div class="field">
+          <label>标题（可空，默认文件名）</label>
+          <input type="text" id="title" placeholder="文档标题">
+        </div>
+        <div class="field">
+          <label>部门</label>
+          <input type="text" id="dept" list="dept-list" placeholder="选择或输入">
+          <datalist id="dept-list"></datalist>
+        </div>
+        <div class="field">
+          <label>知识类型</label>
+          <select id="ktype"></select>
+        </div>
+        <div class="field">
+          <label>入库状态</label>
+          <select id="status">
+            <option value="0">草稿</option>
+            <option value="1">待审核</option>
+            <option value="2">已发布（立即可检索）</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>可见角色</label>
+          <div id="roles" class="role-checks"></div>
+        </div>
+        <div class="field full">
+          <button id="upload" class="btn-primary">上传并入库</button>
+          <span id="upload-msg" class="msg-line"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="table-head">
+        <h3>文档列表 <span id="count" class="count"></span></h3>
+        <div class="filters" id="filters"></div>
+        <button id="sync" class="btn-ghost" title="扫描 knowledge-base 目录，按文件哈希增量更新">增量同步</button>
+      </div>
+      <table class="docs">
+        <thead>
+          <tr>
+            <th>#</th><th>标题</th><th>部门</th><th>类型</th><th>状态</th>
+            <th>切片</th><th>大小</th><th>更新时间</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="empty" class="empty" hidden>暂无文档</div>
+    </section>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,234 @@
+:root {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --bg: #f1f5f9;
+  --panel: #ffffff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --user-bubble: #2563eb;
+  --ai-bubble: #ffffff;
+  --cite: #0ea5e9;
+  --danger: #dc2626;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; }
+
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 顶栏 */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.brand-text .title { font-size: 16px; font-weight: 700; }
+.brand-text .subtitle { font-size: 12px; color: var(--muted); }
+.controls { display: flex; align-items: center; gap: 10px; }
+.role-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+}
+.btn-ghost {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+}
+.btn-ghost:hover { color: var(--primary); border-color: var(--primary); }
+
+/* 聊天区 */
+.chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 24px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.chat-inner { max-width: 860px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+
+.msg { display: flex; max-width: 860px; width: 100%; margin: 0 auto; }
+.msg.user { justify-content: flex-end; }
+.msg.ai { justify-content: flex-start; }
+
+.bubble {
+  max-width: 78%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 15px;
+  line-height: 1.7;
+  word-break: break-word;
+  white-space: normal;
+}
+.msg.user .bubble { background: var(--user-bubble); color: #fff; border-bottom-right-radius: 4px; }
+.msg.ai .bubble {
+  background: var(--ai-bubble);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+
+.bubble .cite {
+  color: var(--cite);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 1px;
+  vertical-align: super;
+  text-decoration: none;
+}
+.msg.user .bubble .cite { color: #bae6fd; }
+
+.meta { margin-top: 6px; font-size: 12px; color: var(--muted); display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: #eef2ff;
+  color: var(--primary);
+}
+.tag.refused { background: #fef2f2; color: var(--danger); }
+.tag.waiting { background: #fff7ed; color: #c2410c; }
+
+/* 引用面板 */
+.citations {
+  margin-top: 8px;
+  border-top: 1px dashed var(--border);
+  padding-top: 8px;
+}
+.citations-toggle {
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.citations-toggle:hover { color: var(--primary); }
+.citations-list { display: none; margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.citations.collapsed .citations-list { display: none; }
+.citation-item {
+  font-size: 12px;
+  color: var(--muted);
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  line-height: 1.5;
+}
+.citation-item b { color: var(--primary); }
+.citation-item .sim { float: right; color: #94a3b8; }
+
+/* 加载/状态气泡 */
+.bubble.thinking { color: var(--muted); }
+.dots::after {
+  content: '…';
+  animation: dots 1.2s steps(4, end) infinite;
+}
+@keyframes dots {
+  0% { content: ''; }
+  25% { content: '·'; }
+  50% { content: '··'; }
+  75% { content: '···'; }
+}
+
+.bubble.error { background: #fef2f2; border: 1px solid #fecaca; color: var(--danger); }
+
+/* 欢迎卡片 */
+.welcome {
+  max-width: 860px; width: 100%; margin: 40px auto;
+  text-align: center;
+}
+.welcome .big-logo {
+  width: 64px; height: 64px; margin: 0 auto 16px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  color: #fff; font-size: 30px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.welcome h2 { font-size: 20px; margin-bottom: 8px; }
+.welcome p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+.samples { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.sample {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all .15s;
+}
+.sample:hover { border-color: var(--primary); color: var(--primary); }
+
+/* 输入区 */
+.composer { flex-shrink: 0; padding: 12px 24px 16px; background: var(--panel); border-top: 1px solid var(--border); }
+.composer-box {
+  max-width: 860px; margin: 0 auto;
+  display: flex; align-items: flex-end; gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #fff;
+  transition: border-color .15s, box-shadow .15s;
+}
+.composer-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+#input {
+  flex: 1;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 15px;
+  line-height: 1.6;
+  font-family: inherit;
+  max-height: 120px;
+  background: transparent;
+}
+.btn-send {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+}
+.btn-send:hover:not(:disabled) { background: var(--primary-dark); }
+.btn-send:disabled { background: #cbd5e1; cursor: not-allowed; }
+.composer-hint {
+  max-width: 860px; margin: 8px auto 0;
+  font-size: 12px; color: var(--muted); text-align: center;
+}

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>导办事项管理 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="gov.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">办</span>
+      <div class="brand-text">
+        <div class="title">导办事项管理</div>
+        <div class="subtitle">一网通办同步 · 事项推荐 · 免登录票据（M-G-01 / I-03 / P-DB-02）</div>
+      </div>
+    </div>
+    <nav class="topnav">
+      <a class="btn-ghost" href="/admin" data-perm="docs.view,agents.view,gateway.view,chatlogs.view,stats.view,system.words,system.logs,rbac.view">返回后台</a>
+      <a class="btn-ghost" href="/apps" data-perm="apps.view">应用广场</a>
+      <a class="btn-ghost" href="/feedback" data-perm="feedback.view">问答反馈</a>
+      <a class="btn-ghost" href="/" target="_blank" rel="noopener">对话页</a>
+    </nav>
+  </header>
+
+  <main class="wrap wrap-wide">
+    <section class="card gv-intro">
+      <div class="gv-intro-main">
+        <h3>办事事项会出现在相关回答下方</h3>
+        <p>
+          对话命中事项名称、关键词或主管部门时，回答下方推荐办理卡片。用户点击后由服务端
+          签发<b>一次性短时票据</b>，跳转办事大厅完成身份核验——票据只在服务端兑换，
+          不在前端保存用户身份。
+        </p>
+      </div>
+      <div class="gv-stats">
+        <div class="gv-stat"><b id="gv-total">0</b><span>事项总数</span></div>
+        <div class="gv-stat"><b id="gv-enabled">0</b><span>已启用</span></div>
+        <div class="gv-stat"><b id="gv-active">0</b><span>生效中</span></div>
+        <div class="gv-stat"><b id="gv-ticket">0</b><span>需票据</span></div>
+      </div>
+      <div class="gv-actions">
+        <button id="gv-sync" class="btn-ghost" data-perm="gov.manage">同步一网通办</button>
+        <button id="gv-new" class="btn-primary" data-perm="gov.manage">＋ 新建事项</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="table-head">
+        <h3>事项清单 <span class="count" id="gv-note">加载中…</span></h3>
+        <select id="gv-status" class="head-select" title="按状态 / 生效情况筛选">
+          <option value="">全部状态</option>
+          <option value="1">已启用</option>
+          <option value="0">已停用</option>
+          <option value="active">生效中</option>
+          <option value="scheduled">未生效</option>
+          <option value="expired">已过期</option>
+          <option value="disabled">已停用（生效态）</option>
+        </select>
+        <input type="search" id="gv-q" class="head-input" placeholder="搜索事项 / 部门 / 材料 / 标签后回车">
+        <button id="gv-refresh" class="btn-ghost">刷新</button>
+      </div>
+
+      <div class="gv-sync-note" id="gv-sync-note"></div>
+
+      <div class="gv-scroll">
+        <table class="docs gv-table">
+          <thead>
+            <tr>
+              <th>事项</th>
+              <th>主管部门</th>
+              <th>办理入口</th>
+              <th>票据</th>
+              <th>生效时段</th>
+              <th>状态</th>
+              <th>更新时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="gv-tbody"></tbody>
+        </table>
+      </div>
+      <div id="gv-empty" class="empty" hidden>暂无导办事项，可点击「同步一网通办」导入或手动新建</div>
+    </section>
+  </main>
+
+  <div class="modal" id="gv-modal" hidden>
+    <div class="modal-mask" data-gv-close="1"></div>
+    <div class="modal-box modal-wide">
+      <div class="modal-head">
+        <h3 id="gv-modal-title">新建导办事项</h3>
+        <button class="modal-x" data-gv-close="1" title="关闭">×</button>
+      </div>
+
+      <div class="ag-form">
+        <div class="field">
+          <label>事项名称 *</label>
+          <input type="text" id="gv-f-name" maxlength="255" placeholder="如：校园卡补办">
+        </div>
+        <div class="field">
+          <label>主管部门 *</label>
+          <select id="gv-f-dept"></select>
+        </div>
+        <div class="field full">
+          <label>办理入口 *（http(s):// 或站内路径）</label>
+          <input type="text" id="gv-f-url" maxlength="512" placeholder="如：/hall 或 https://ehall.example.edu.cn/item/123">
+          <div class="gv-hint">票据会以 <code>?ticket=…</code> 追加到该地址；不需要票据时直接打开此地址。</div>
+        </div>
+        <div class="field">
+          <label>状态</label>
+          <select id="gv-f-status">
+            <option value="1">启用（可被推荐 / 办理）</option>
+            <option value="0">停用（不推荐、不可办理）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>办理方式</label>
+          <label class="switch-line"><input type="checkbox" id="gv-f-ticket" checked> 签发免登录票据</label>
+        </div>
+        <div class="field">
+          <label>生效开始（选填）</label>
+          <input type="datetime-local" id="gv-f-from">
+        </div>
+        <div class="field">
+          <label>生效结束（选填）</label>
+          <input type="datetime-local" id="gv-f-to">
+          <div class="gv-hint">留空表示不限制；结束时间必须晚于开始时间。</div>
+        </div>
+        <div class="field full">
+          <label>关键词标签（逗号分隔，最多 20 个；用于对话推荐）</label>
+          <input type="text" id="gv-f-tags" maxlength="512" placeholder="如：校园卡,补办,挂失,一卡通">
+        </div>
+        <div class="field full">
+          <label>可见角色 *（「全部」与具体角色互斥）</label>
+          <div id="gv-f-roles" class="role-checks"></div>
+        </div>
+        <div class="field full">
+          <label>办理条件</label>
+          <textarea id="gv-f-conditions" rows="3" maxlength="4000" placeholder="如：校园卡遗失、损坏，且账户状态正常"></textarea>
+        </div>
+        <div class="field full">
+          <label>所需材料</label>
+          <textarea id="gv-f-materials" rows="3" maxlength="4000" placeholder="如：本人身份证、学生证；工本费 20 元"></textarea>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <span id="gv-modal-msg" class="msg-line"></span>
+        <button class="btn-ghost" data-gv-close="1">取消</button>
+        <button class="btn-primary" id="gv-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="gov.js"></script>
+</body>
+</html>

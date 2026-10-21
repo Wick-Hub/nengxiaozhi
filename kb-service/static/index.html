@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0f1e">
+  <title>能小智 · 校园AI助手</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">智</span>
+      <div class="brand-text">
+        <div class="title" id="brand-title">能小智 · 校园AI助手</div>
+        <div class="subtitle" id="brand-subtitle">基于校园知识库的智能问答</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="history-toggle" class="btn-ghost history-toggle" type="button"
+              aria-controls="history-panel" aria-expanded="false">历史</button>
+      <button id="support-open" class="btn-ghost support-open" type="button" hidden
+              title="转接人工客服">转人工<span id="support-badge" class="support-badge" hidden></span></button>
+      <a class="btn-ghost admin-link" href="/admin" title="知识管理后台">管理后台</a>
+      <select id="agent-select" class="role-select agent-select" title="切换助手（切换后开启新会话）"
+              aria-label="切换助手" hidden></select>
+      <select id="role" class="role-select" title="选择身份，决定可见知识范围">
+        <option value="访客">访客</option>
+        <option value="本科生">本科生</option>
+        <option value="研究生">研究生</option>
+        <option value="教职工">教职工</option>
+        <option value="离退休人员">离退休人员</option>
+      </select>
+      <button id="new-chat" class="btn-ghost" type="button">新会话</button>
+      <div id="auth-box" class="auth-box"></div>
+    </div>
+  </header>
+
+  <div class="portal-layout">
+    <aside id="history-panel" class="history-panel" aria-label="会话历史">
+      <div class="history-head">
+        <b>会话历史</b>
+        <div class="history-head-ops">
+          <button id="history-clear" class="history-clear" type="button">清空</button>
+          <button id="history-close" class="history-close" type="button" aria-label="关闭历史面板">×</button>
+        </div>
+      </div>
+      <div id="history-list" class="history-list"></div>
+      <div class="history-foot">历史保存在本机；点击条目恢复整段会话。</div>
+    </aside>
+    <div id="history-overlay" class="history-overlay" hidden></div>
+
+    <div class="portal-main">
+      <main id="chat" class="chat"></main>
+      <footer class="composer">
+        <div class="composer-box">
+          <textarea id="input" rows="1" placeholder="输入你的问题，例如：校园网怎么开通？"></textarea>
+          <button id="mic" class="btn-mic" type="button" aria-label="语音输入" aria-pressed="false"
+                  title="语音输入" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M12 14a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v5a3 3 0 0 0 3 3Z"/>
+              <path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/>
+            </svg>
+          </button>
+          <button id="send" class="btn-send" disabled>发送</button>
+        </div>
+        <div class="composer-hint">可直接输入，也可点击麦克风语音提问；回答仅依据已入库的校园知识资料生成，并自动附引用来源。敏感操作请通过学校官方渠道办理。</div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- 任务 4.9：点踩原因弹窗（分享/反馈） -->
+  <div id="fb-modal" class="fb-modal" hidden>
+    <div class="fb-card" role="dialog" aria-modal="true" aria-labelledby="fb-title">
+      <h3 id="fb-title">这条回答哪里不满意？</h3>
+      <p class="fb-sub">原因会进入反馈记录，帮助我们补充和改进知识库。</p>
+      <div class="fb-reasons" id="fb-reasons"></div>
+      <label class="fb-field">补充说明（选填）
+        <textarea id="fb-note" rows="3" maxlength="512" placeholder="例如：材料清单和实际办理要求不一致"></textarea>
+      </label>
+      <p class="fb-msg" id="fb-msg" hidden></p>
+      <div class="fb-ops">
+        <button type="button" class="btn-ghost" id="fb-cancel">取消</button>
+        <button type="button" class="btn-send" id="fb-submit">提交反馈</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 任务 4.6：人工客服面板（转人工 / 离线留言 / 坐席回复） -->
+  <div id="support-panel" class="support-panel" hidden>
+    <div class="support-mask" id="support-mask"></div>
+    <section class="support-card" role="dialog" aria-modal="true" aria-labelledby="support-title">
+      <header class="support-head">
+        <div>
+          <h3 id="support-title">人工客服</h3>
+          <p id="support-sub">转人工后由在线坐席接待；若客服离线，留言会在坐席上线后回复。</p>
+        </div>
+        <div class="support-head-ops">
+          <span id="support-state" class="support-state" hidden></span>
+          <button id="support-close" class="support-x" type="button" aria-label="关闭客服窗口">×</button>
+        </div>
+      </header>
+      <div id="support-notice" class="support-notice" hidden></div>
+      <div id="support-thread" class="support-thread"></div>
+      <div class="support-composer">
+        <textarea id="support-input" rows="2" maxlength="2000" placeholder="描述你的问题，发送给人工客服…"></textarea>
+        <div class="support-foot">
+          <span id="support-msg" class="support-msg"></span>
+          <button id="support-end" class="btn-ghost" type="button" hidden>结束会话</button>
+          <button id="support-send" class="btn-send" type="button">发送</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="login-modal" class="login-modal" hidden>
+    <form id="login-form" class="login-card" role="dialog" aria-modal="true" aria-labelledby="lm-title">
+      <h3 id="lm-title">登录能小智</h3>
+      <p class="login-sub">登录后按校园身份匹配知识范围、角色路由与应用广场</p>
+      <div id="lm-msg" class="login-msg" hidden></div>
+      <label class="login-field">学工号
+        <input id="lm-user" autocomplete="username" maxlength="64" required>
+      </label>
+      <label class="login-field">密码（未设密码的演示账号可留空）
+        <input id="lm-pass" type="password" autocomplete="current-password" maxlength="128">
+      </label>
+      <label class="login-field">身份（未登记账号时使用）
+        <select id="lm-role">
+          <option value="本科生">本科生</option>
+          <option value="研究生">研究生</option>
+          <option value="教职工">教职工</option>
+          <option value="离退休人员">离退休人员</option>
+          <option value="访客">访客</option>
+        </select>
+      </label>
+      <a id="lm-sso" class="login-sso" href="#">使用统一身份认证登录</a>
+      <div class="login-ops">
+        <button id="lm-cancel" class="btn-ghost" type="button">取消</button>
+        <button id="lm-submit" class="btn-send" type="submit">登录</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="app.js"></script>
+  <script src="support-widget.js"></script>
+</body>
+</html>

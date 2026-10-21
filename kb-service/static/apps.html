@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>应用广场管理 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="apps.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">应</span>
+      <div class="brand-text">
+        <div class="title">应用广场管理</div>
+        <div class="subtitle">智能体与外部应用 · 分类排序 · 按身份角色授权可见（M-C-05/06）</div>
+      </div>
+    </div>
+    <nav class="topnav">
+      <a class="btn-ghost" href="/admin" data-perm="docs.view,agents.view,gateway.view,chatlogs.view,stats.view,system.words,system.logs,rbac.view">返回后台</a>
+      <a class="btn-ghost" href="/channels" data-perm="channels.view">渠道分身</a>
+      <a class="btn-ghost" href="/gov" data-perm="gov.view">导办事项</a>
+      <a class="btn-ghost" href="/unrecognized" data-perm="unrecognized.view">未识别问题</a>
+      <a class="btn-ghost" href="/" target="_blank" rel="noopener">对话页</a>
+    </nav>
+  </header>
+
+  <main class="wrap wrap-wide">
+    <section class="card ap-intro">
+      <div class="ap-intro-main">
+        <h3>一个广场，按角色呈现不同应用</h3>
+        <p>
+          应用可绑定已有智能体，也可指向办事大厅等外部链接。用户端首屏按当前身份
+          只展示有权限的应用；智能体下架或删除后，对应应用会自动从广场隐藏。
+        </p>
+      </div>
+      <div class="ap-stats">
+        <div class="ap-stat"><b id="ap-count">0</b><span>应用总数</span></div>
+        <div class="ap-stat"><b id="ap-enabled">0</b><span>上架中</span></div>
+        <div class="ap-stat"><b id="ap-cats">0</b><span>分类数</span></div>
+      </div>
+      <button id="ap-new" class="btn-primary" data-perm="apps.manage">＋ 新建应用</button>
+    </section>
+
+    <section class="card">
+      <div class="table-head">
+        <h3>应用清单 <span class="count" id="ap-note">加载中…</span></h3>
+        <button id="ap-refresh" class="btn-ghost">刷新</button>
+      </div>
+
+      <div class="ap-scroll">
+        <table class="docs ap-table">
+          <thead>
+            <tr>
+              <th>应用</th>
+              <th>来源</th>
+              <th>可见角色</th>
+              <th>排序</th>
+              <th>状态</th>
+              <th>更新时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="ap-tbody"></tbody>
+        </table>
+      </div>
+      <div id="ap-empty" class="empty" hidden>暂无应用，点击右上角「新建应用」开始配置</div>
+    </section>
+  </main>
+
+  <div class="modal" id="ap-modal" hidden>
+    <div class="modal-mask" data-ap-close="1"></div>
+    <div class="modal-box modal-wide">
+      <div class="modal-head">
+        <h3 id="ap-modal-title">新建应用</h3>
+        <button class="modal-x" data-ap-close="1" title="关闭">×</button>
+      </div>
+
+      <div class="ag-form">
+        <div class="field">
+          <label>应用名称 *</label>
+          <input type="text" id="ap-f-name" maxlength="128" placeholder="如：财务助手">
+        </div>
+        <div class="field">
+          <label>来源 *</label>
+          <select id="ap-f-source">
+            <option value="agent">智能体</option>
+            <option value="link">外部链接</option>
+          </select>
+        </div>
+        <div class="field ap-agent-field">
+          <label>绑定智能体 *</label>
+          <select id="ap-f-agent"></select>
+          <p class="ap-hint" id="ap-agent-hint">助手下架或删除后，该应用自动从广场隐藏。</p>
+        </div>
+        <div class="field ap-link-field" hidden>
+          <label>链接地址 *</label>
+          <input type="text" id="ap-f-link" maxlength="512" placeholder="https://ehall.example.edu.cn 或 /guide">
+          <p class="ap-hint">仅支持 http(s) 与站内路径，禁止脚本协议。</p>
+        </div>
+        <div class="field">
+          <label>分类 *</label>
+          <input type="text" id="ap-f-category" maxlength="32" list="ap-cat-list" placeholder="如：事务办理">
+          <datalist id="ap-cat-list"></datalist>
+        </div>
+        <div class="field">
+          <label>图标（emoji 或图片 URL）</label>
+          <input type="text" id="ap-f-icon" maxlength="255" placeholder="如：💰 或 https://…/icon.png">
+        </div>
+        <div class="field full">
+          <label>简介</label>
+          <textarea id="ap-f-desc" rows="2" maxlength="255" placeholder="一句话说明这个应用能做什么"></textarea>
+        </div>
+        <div class="field">
+          <label>排序（0–9999，小的在前）</label>
+          <input type="number" id="ap-f-sort" min="0" max="9999" step="1" value="0">
+        </div>
+        <div class="field">
+          <label>状态</label>
+          <select id="ap-f-status">
+            <option value="1">上架</option>
+            <option value="0">下架</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>可见角色 *（「全部」与具体角色互斥）</label>
+          <div id="ap-f-roles" class="ap-role-grid"></div>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <span id="ap-modal-msg" class="msg-line"></span>
+        <button class="btn-ghost" data-ap-close="1">取消</button>
+        <button class="btn-primary" id="ap-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="apps.js"></script>
+</body>
+</html>

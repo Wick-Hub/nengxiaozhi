@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>一网通办 · 能小智</title>
+  <link rel="stylesheet" href="hall.css">
+</head>
+<body>
+  <header class="hall-top">
+    <div class="hall-brand">
+      <span class="hall-logo">办</span>
+      <div>
+        <b>一网通办</b>
+        <small>能小智 · 免登录办事通道</small>
+      </div>
+    </div>
+    <a class="hall-back" href="/">← 返回能小智</a>
+  </header>
+
+  <main class="hall-wrap">
+    <section class="hall-hero" id="state-loading">
+      <span class="hall-spinner" aria-hidden="true"></span>
+      <h1>正在核验办理票据</h1>
+      <p>票据一次性使用，请勿刷新或转发本页地址。</p>
+    </section>
+
+    <section class="hall-hero hall-error" id="state-error" hidden>
+      <div class="hall-icon" aria-hidden="true">!</div>
+      <h1 id="err-title">票据核验失败</h1>
+      <p id="err-desc"></p>
+      <div class="hall-ops">
+        <a class="hall-btn primary" href="/">返回能小智重新办理</a>
+        <button class="hall-btn" id="retry" type="button" hidden>重试核验</button>
+      </div>
+    </section>
+
+    <div id="state-ok" hidden>
+      <section class="hall-card hall-welcome">
+        <div class="hall-welcome-main">
+          <span class="hall-ok" aria-hidden="true">✓</span>
+          <div>
+            <h1>身份核验通过，请办理「<span id="ok-item"></span>」</h1>
+            <p>本页由能小智签发的<b>一次性票据</b>换取，票据已消费，无法再次打开。</p>
+          </div>
+        </div>
+        <div class="hall-identity">
+          <div><span>办理人</span><b id="ok-name"></b></div>
+          <div><span>学工号</span><b id="ok-no"></b></div>
+          <div><span>身份</span><b id="ok-role"></b></div>
+          <div><span>主管部门</span><b id="ok-dept"></b></div>
+        </div>
+      </section>
+
+      <div class="hall-grid">
+        <section class="hall-card">
+          <h2>办理须知</h2>
+          <div class="hall-note-block">
+            <h3>办理条件</h3>
+            <pre id="ok-conditions"></pre>
+            <h3>所需材料</h3>
+            <pre id="ok-materials"></pre>
+          </div>
+          <p class="hall-ticket-meta" id="ok-meta"></p>
+        </section>
+
+        <section class="hall-card">
+          <h2>提交办理申请</h2>
+          <p class="hall-dim">演示环境：此处为模拟表单，提交后不会写入真实业务系统。</p>
+          <form id="apply-form" class="hall-form">
+            <label>联系电话
+              <input id="apply-phone" inputmode="tel" maxlength="20" placeholder="用于接收办理进度通知">
+            </label>
+            <label>补充说明
+              <textarea id="apply-note" rows="4" maxlength="500" placeholder="可填写具体情况，选填"></textarea>
+            </label>
+            <button class="hall-btn primary" type="submit" id="apply-submit">提交办理申请</button>
+          </form>
+          <div class="hall-result" id="apply-result" hidden></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="hall-foot">能小智 · 校园 AI 助手平台 · 票据只在服务端兑换，不在页面留存</footer>
+  <script src="hall.js"></script>
+</body>
+</html>

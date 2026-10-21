@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>渠道分身 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="channels.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">渠</span>
+      <div class="brand-text">
+        <div class="title">渠道分身管理</div>
+        <div class="subtitle">官网 / 二级网站 / 企微 / 公众号 / 大厅 / 硬件 · 独立入口与嵌入代码（M-C-01）</div>
+      </div>
+    </div>
+    <nav class="topnav">
+      <a class="btn-ghost" href="/admin" data-perm="docs.view,agents.view,gateway.view,chatlogs.view,stats.view,system.words,system.logs,rbac.view">返回后台</a>
+      <a class="btn-ghost" href="/apps" data-perm="apps.view">应用广场</a>
+      <a class="btn-ghost" href="/gov" data-perm="gov.view">导办事项</a>
+      <a class="btn-ghost" href="/points" data-perm="points.view">知识点管理</a>
+      <a class="btn-ghost" href="/unrecognized" data-perm="unrecognized.view">未识别问题</a>
+      <a class="btn-ghost" href="/" target="_blank" rel="noopener">对话页</a>
+    </nav>
+  </header>
+
+  <main class="wrap wrap-wide">
+    <section class="card ch-intro">
+      <div class="ch-intro-main">
+        <h3>一个渠道，一个独立分身</h3>
+        <p>
+          渠道决定「从哪里进入、默认用哪个助手、能切换哪些助手」。
+          创建后可直接复制渠道 URL，或把 iframe / 浮窗代码粘贴到官网、部门站与业务系统。
+        </p>
+      </div>
+      <div class="ch-stats">
+        <div class="ch-stat"><b id="ch-count">0</b><span>渠道总数</span></div>
+        <div class="ch-stat"><b id="ch-enabled">0</b><span>启用中</span></div>
+        <div class="ch-stat"><b id="ch-agents">0</b><span>可用助手</span></div>
+      </div>
+      <button id="ch-new" class="btn-primary" data-perm="channels.manage">＋ 新建渠道</button>
+    </section>
+
+    <section class="card">
+      <div class="table-head">
+        <h3>渠道清单 <span class="count" id="ch-note">加载中…</span></h3>
+        <button id="ch-refresh" class="btn-ghost">刷新</button>
+      </div>
+
+      <div class="ch-scroll">
+        <table class="docs ch-table">
+          <thead>
+            <tr>
+              <th>渠道名称 / 编码</th>
+              <th>默认助手</th>
+              <th>可切换助手</th>
+              <th>统一认证</th>
+              <th>状态</th>
+              <th>更新时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="ch-tbody"></tbody>
+        </table>
+      </div>
+      <div id="ch-empty" class="empty" hidden>暂无渠道，点击右上角「新建渠道」开始配置</div>
+    </section>
+  </main>
+
+  <!-- 新建 / 编辑渠道 -->
+  <div class="modal" id="ch-modal" hidden>
+    <div class="modal-mask" data-ch-close="1"></div>
+    <div class="modal-box modal-wide">
+      <div class="modal-head">
+        <h3 id="ch-modal-title">新建渠道</h3>
+        <button class="modal-x" data-ch-close="1" title="关闭">×</button>
+      </div>
+
+      <div class="ag-form">
+        <div class="field">
+          <label>渠道编码 *（唯一，小写字母/数字/-/_）</label>
+          <input type="text" id="ch-f-code" maxlength="64" placeholder="如：official-site">
+        </div>
+        <div class="field">
+          <label>渠道名称 *</label>
+          <input type="text" id="ch-f-name" maxlength="128" placeholder="如：学校官网">
+        </div>
+        <div class="field full">
+          <label>欢迎语（对话页首屏展示，可空）</label>
+          <textarea id="ch-f-welcome" rows="3" maxlength="1024" placeholder="如：欢迎咨询西安科技大学校园事务，我会依据校内知识库作答。"></textarea>
+        </div>
+        <div class="field">
+          <label>默认助手 *</label>
+          <select id="ch-f-default"></select>
+        </div>
+        <div class="field">
+          <label>主题色 / 浮窗位置 / 按钮文案</label>
+          <div class="ch-inline">
+            <input type="color" id="ch-f-color" value="#5b8cff" title="主题色">
+            <select id="ch-f-position" title="浮窗位置">
+              <option value="right">浮窗右下</option>
+              <option value="left">浮窗左下</option>
+            </select>
+            <input type="text" id="ch-f-launcher" maxlength="16" placeholder="有问题问我">
+          </div>
+        </div>
+        <div class="field">
+          <label>统一认证</label>
+          <select id="ch-f-need-auth">
+            <option value="0">访客可用（无需登录）</option>
+            <option value="1">需统一认证</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>状态</label>
+          <select id="ch-f-status">
+            <option value="1">启用</option>
+            <option value="0">停用</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>渠道内可切换助手（默认助手恒包含）</label>
+          <div id="ch-f-agents" class="ch-agent-grid"></div>
+          <p class="ch-hint">不勾选时仅保留默认助手；停用的助手不会出现在用户端。</p>
+        </div>
+
+        <div class="ch-section full">
+          <h4>门户个性化</h4>
+          <p class="ch-hint">以下配置只影响该渠道的对话页/嵌入页，不影响其它渠道；留空即使用通用样式。</p>
+        </div>
+        <div class="field">
+          <label>AI 形象名称</label>
+          <input type="text" id="ch-f-assistant" maxlength="32" placeholder="如：小智">
+        </div>
+        <div class="field">
+          <label>头像文字 / 图片 URL</label>
+          <div class="ch-inline">
+            <input type="text" id="ch-f-avatar-text" maxlength="6" placeholder="智">
+            <input type="text" id="ch-f-avatar-url" maxlength="512" placeholder="https://…（可选，优先于文字）">
+          </div>
+        </div>
+        <div class="field full">
+          <label>常见问题（每行一个，最多 8 条）</label>
+          <textarea id="ch-f-faq" rows="3" placeholder="校园网怎么开通？&#10;一卡通丢了怎么办？"></textarea>
+        </div>
+        <div class="field full">
+          <label>快捷方式（每行一个：图标|名称|动作|内容，动作填「问」或「链」，最多 8 个）</label>
+          <textarea id="ch-f-shortcuts" rows="3" placeholder="🌐|校园网|问|校园网怎么开通？&#10;🏛|办事大厅|链|https://ehall.example.edu.cn"></textarea>
+        </div>
+        <div class="field full">
+          <label>推荐应用（每行一个：图标|名称|说明|链接，最多 8 个）</label>
+          <textarea id="ch-f-apps" rows="3" placeholder="📚|图书馆|借阅与续借|https://lib.example.edu.cn"></textarea>
+        </div>
+        <div class="field">
+          <label>客服入口</label>
+          <div class="ch-entry-row">
+            <select id="ch-f-service-enabled">
+              <option value="0">关闭</option>
+              <option value="1">开启</option>
+            </select>
+            <input type="text" id="ch-f-service-label" maxlength="16" placeholder="联系客服">
+          </div>
+          <input type="text" id="ch-f-service-url" maxlength="512" placeholder="https://… 或 /contact">
+        </div>
+        <div class="field">
+          <label>反馈入口</label>
+          <div class="ch-entry-row">
+            <select id="ch-f-feedback-enabled">
+              <option value="0">关闭</option>
+              <option value="1">开启</option>
+            </select>
+            <input type="text" id="ch-f-feedback-label" maxlength="16" placeholder="意见反馈">
+          </div>
+          <input type="text" id="ch-f-feedback-url" maxlength="512" placeholder="https://… 或 /feedback">
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <span id="ch-modal-msg" class="msg-line"></span>
+        <button class="btn-ghost" data-ch-close="1">取消</button>
+        <button class="btn-primary" id="ch-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 渠道 URL / 嵌入代码 -->
+  <div class="modal" id="ch-code-modal" hidden>
+    <div class="modal-mask" data-ch-code-close="1"></div>
+    <div class="modal-box modal-wide">
+      <div class="modal-head">
+        <h3 id="ch-code-title">嵌入代码</h3>
+        <button class="modal-x" data-ch-code-close="1" title="关闭">×</button>
+      </div>
+
+      <div class="ch-url-row">
+        <label>渠道 URL</label>
+        <code id="ch-url"></code>
+        <button class="btn-ghost" id="ch-copy-url">复制链接</button>
+      </div>
+
+      <div class="ch-code-tabs" id="ch-code-tabs">
+        <button class="ch-code-tab active" data-kind="iframe">iframe 嵌入</button>
+        <button class="ch-code-tab" data-kind="float">浮窗嵌入</button>
+        <button class="ch-code-tab" data-kind="sdk">嵌入 SDK（推荐）</button>
+      </div>
+      <pre id="ch-code-pre" class="ch-code"></pre>
+      <p class="ch-hint" id="ch-code-hint">把代码粘贴到外部页面即可；iframe 适合固定区块，浮窗适合全站右下角常驻入口。</p>
+
+      <div class="modal-foot">
+        <span id="ch-code-msg" class="msg-line"></span>
+        <button class="btn-ghost" data-ch-code-close="1">关闭</button>
+        <button class="btn-primary" id="ch-copy-code">复制代码</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 渠道×角色会话路由（任务 3.4 / M-C-07） -->
+  <div class="modal" id="ch-route-modal" hidden>
+    <div class="modal-mask" data-ch-route-close="1"></div>
+    <div class="modal-box modal-wide">
+      <div class="modal-head">
+        <h3 id="ch-route-title">角色路由</h3>
+        <button class="modal-x" data-ch-route-close="1" title="关闭">×</button>
+      </div>
+
+      <p class="ch-hint">
+        按身份指定默认助手、欢迎语与引导问题，并控制首屏功能模块。
+        未启用的身份沿用渠道默认配置；保存后用户端切换身份立即生效。
+      </p>
+      <div id="ch-route-list" class="ch-route-list"></div>
+
+      <div class="modal-foot">
+        <span id="ch-route-msg" class="msg-line"></span>
+        <button class="btn-ghost" data-ch-route-close="1">取消</button>
+        <button class="btn-primary" id="ch-route-save">保存路由</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="channels.js"></script>
+</body>
+</html>

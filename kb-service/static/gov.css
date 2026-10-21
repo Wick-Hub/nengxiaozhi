@@ -1,0 +1,80 @@
+/* 能小智 · 导办事项管理（任务 4.5 / M-G-01、I-03）
+ * 复用 admin.css 的卡片 / 表格 / 弹窗骨架，这里只补本页专属布局。
+ */
+
+.gv-intro {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+.gv-intro-main { flex: 1 1 360px; min-width: 0; }
+.gv-intro-main h3 { margin: 0 0 6px; font-size: 17px; }
+.gv-intro-main p { margin: 0; color: var(--text-dim); font-size: 13px; line-height: 1.75; }
+.gv-intro-main b { color: var(--text); }
+
+.gv-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.gv-stat {
+  min-width: 86px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(146, 168, 255, .06);
+  text-align: center;
+}
+.gv-stat b { display: block; font-size: 21px; line-height: 1.2; color: #fff; }
+.gv-stat span { display: block; margin-top: 3px; font-size: 11.5px; color: var(--text-muted); }
+
+.gv-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.gv-sync-note {
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--border);
+  background: rgba(146, 168, 255, .05);
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.gv-sync-note b { color: var(--text-dim); }
+.gv-sync-note .ok { color: #6ee7b7; }
+.gv-sync-note .err { color: #fda4af; }
+
+.gv-scroll { overflow-x: auto; }
+.gv-table { min-width: 980px; }
+.gv-table td { vertical-align: top; }
+.gv-name { display: flex; flex-direction: column; gap: 4px; min-width: 190px; }
+.gv-name b { font-size: 13.5px; color: var(--text); }
+.gv-name .gv-id { font-size: 11px; color: var(--text-muted); }
+.gv-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 2px; }
+.gv-tag {
+  padding: 1px 7px; border-radius: 6px;
+  font-size: 10.5px; color: var(--text-dim);
+  background: rgba(146, 168, 255, .09);
+  border: 1px solid var(--border);
+}
+.gv-url {
+  display: block; max-width: 210px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 12px; color: var(--text-dim);
+}
+.gv-url code { font-size: 11.5px; }
+.gv-window { font-size: 12px; color: var(--text-dim); line-height: 1.7; white-space: nowrap; }
+.gv-window .dim { color: var(--text-muted); }
+.gv-state { display: flex; flex-wrap: wrap; gap: 5px; }
+.gv-state .badge { white-space: nowrap; }
+.gv-none { color: var(--text-muted); font-size: 12px; }
+
+.gv-hint { margin-top: 6px; font-size: 11.5px; color: var(--text-muted); line-height: 1.6; }
+.gv-hint code {
+  padding: 1px 5px; border-radius: 4px;
+  background: rgba(146, 168, 255, .1);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 720px) {
+  .gv-intro { align-items: flex-start; }
+  .gv-actions { width: 100%; }
+  .gv-actions .btn-primary, .gv-actions .btn-ghost { flex: 1; }
+}

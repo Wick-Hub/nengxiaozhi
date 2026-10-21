@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0f1e">
+  <title>问答分享 · 能小智</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/share.css">
+</head>
+<body class="share-page">
+  <header class="share-topbar">
+    <a class="share-brand" href="/">
+      <span class="share-logo">智</span>
+      <span>
+        <b>能小智</b>
+        <small>校园 AI 助手 · 问答分享</small>
+      </span>
+    </a>
+    <a class="btn-ghost" href="/">打开对话</a>
+  </header>
+
+  <main class="share-wrap">
+    <section class="share-card" id="share-card" hidden>
+      <div class="share-kicker">
+        <span class="share-chip">问答卡片</span>
+        <span class="share-views" id="share-views"></span>
+      </div>
+
+      <h1 class="share-question" id="share-question"></h1>
+
+      <div class="msg ai share-answer-row">
+        <div class="bubble share-answer" id="share-answer"></div>
+      </div>
+
+      <div class="share-meta" id="share-meta"></div>
+      <div class="ai-label">
+        <span class="ai-badge">AI 生成</span>
+        <span>内容由 AI 生成，仅供参考 · 请以学校最新通知为准</span>
+      </div>
+
+      <section class="share-citations" id="share-citations" hidden>
+        <h2>引用来源 <span id="share-citation-count"></span></h2>
+        <div class="citations-list" id="share-citation-list"></div>
+      </section>
+
+      <div class="share-actions">
+        <button type="button" class="share-act" id="share-copy">复制内容</button>
+        <button type="button" class="share-act" id="share-save">保存 .md</button>
+        <button type="button" class="share-act" id="share-native">分享链接</button>
+      </div>
+
+      <section class="share-feedback">
+        <div>
+          <h2>这条回答有帮助吗？</h2>
+          <p>你的反馈会进入运营反馈记录，帮助我们发现知识缺口。</p>
+        </div>
+        <div class="share-fb-ops">
+          <button type="button" class="share-fb" id="share-like" data-rating="1">
+            <span aria-hidden="true">👍</span> 有帮助 <b id="share-likes">0</b>
+          </button>
+          <button type="button" class="share-fb" id="share-dislike" data-rating="-1">
+            <span aria-hidden="true">👎</span> 没帮助 <b id="share-dislikes">0</b>
+          </button>
+        </div>
+      </section>
+
+      <p class="share-toast" id="share-toast" hidden></p>
+    </section>
+
+    <section class="share-error" id="share-error" hidden>
+      <h1>分享不可用</h1>
+      <p id="share-error-text">分享不存在或已失效。</p>
+      <a class="share-act primary" href="/">返回能小智</a>
+    </section>
+  </main>
+
+  <div class="fb-modal" id="share-fb-modal" hidden>
+    <div class="fb-card" role="dialog" aria-modal="true" aria-labelledby="share-fb-title">
+      <h3 id="share-fb-title">这条回答哪里不满意？</h3>
+      <p class="fb-sub">原因会进入反馈记录，帮助我们补充和改进知识库。</p>
+      <div class="fb-reasons" id="share-fb-reasons"></div>
+      <label class="fb-field">补充说明（选填）
+        <textarea id="share-fb-note" rows="3" maxlength="512" placeholder="例如：办理材料与页面说明不一致"></textarea>
+      </label>
+      <p class="fb-msg" id="share-fb-msg" hidden></p>
+      <div class="fb-ops">
+        <button type="button" class="btn-ghost" id="share-fb-cancel">取消</button>
+        <button type="button" class="btn-send" id="share-fb-submit">提交反馈</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/share.js"></script>
+</body>
+</html>

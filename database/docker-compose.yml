@@ -1,0 +1,32 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: nengxiaozhi-mysql
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      # 本地占位默认；真实密码请经 database/.env 的 MYSQL_ROOT_PASSWORD（或环境变量）注入，不要写死/提交。
+      # 注意：已有 mysql-data 卷首次 init 后即使改了此值也不会再变（MySQL 仅空 datadir 时初始化 root 密码）。
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-please-change-me-in-production}
+      MYSQL_DATABASE: nengxiaozhi
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    ports:
+      # 只绑定回环：kb-service 与 Nginx 同机部署，数据库不暴露到校园网
+      - "127.0.0.1:3306:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次启动自动建库建表(22 张生产表 + 1 张原型向量表)
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./prototype-extra.sql:/docker-entrypoint-initdb.d/02-prototype-extra.sql:ro
+
+volumes:
+  mysql-data:

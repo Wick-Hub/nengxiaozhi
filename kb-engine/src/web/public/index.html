@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>能小智 · 校园AI助手</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">智</span>
+      <div class="brand-text">
+        <div class="title">能小智 · 校园AI助手</div>
+        <div class="subtitle">基于校园知识库的智能问答</div>
+      </div>
+    </div>
+    <div class="controls">
+      <a class="btn-ghost" href="/admin" title="知识管理后台">管理后台</a>
+      <select id="role" class="role-select" title="选择身份，决定可见知识范围">
+        <option value="访客">访客</option>
+        <option value="本科生">本科生</option>
+        <option value="研究生">研究生</option>
+        <option value="教职工">教职工</option>
+        <option value="离退休人员">离退休人员</option>
+      </select>
+      <button id="new-chat" class="btn-ghost">新会话</button>
+    </div>
+  </header>
+
+  <main id="chat" class="chat"></main>
+
+  <footer class="composer">
+    <div class="composer-box">
+      <textarea id="input" rows="1" placeholder="输入你的问题，例如：校园网怎么开通？"></textarea>
+      <button id="send" class="btn-send" disabled>发送</button>
+    </div>
+    <div class="composer-hint">回答仅依据已入库的校园知识资料生成，并自动附引用来源。敏感操作请通过学校官方渠道办理。</div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+# ---- 非代码资料：商务/采购/外部评估（默认不入仓，保留本地；如需可删此行）----
+/campus-ai-gateway-评估.md
+/采购内容及要求.pdf
+/采购内容及要求.txt
+
+# ===================================================================
+# 能小智 校园 AI 助手平台 —— 根 .gitignore
+# 目标：只入仓「代码/配置模板/文档」，排除机密、大件、第三方独立仓、本地 AI 记忆。
+# ===================================================================
+
+# ---- 机密 / 本地环境（绝不入仓；.env.example 是模板，需随代码发布）----
+.env
+**/.env
+**/.env.local
+**/.env.*.local
+*.pem
+*.key
+*.p12
+
+# ---- 嵌套/第三方独立仓（不并入；campus-ai-gateway 是上游 Jiusheng01 的仓）----
+/campus-ai-gateway/
+
+# ---- 本地 AI 工作记忆 / 会话（非交付代码）----
+/.workbuddy-ai/
+
+# ---- 依赖 / 构建产物 ----
+**/node_modules/
+**/dist/
+**/build/
+**/.build/
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/
+.venv/
+**/.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ---- 离线安装/构建缓存：wheels、release 试产物 ----
+**/*.whl
+**/wheels-cache/
+**/offline-install-test/
+
+# ---- 运行时数据 / 上传 / 模型 / 日志 / 产出物 ----
+**/uploads/
+**/models/
+**/logs/
+**/outputs/
+**/artifacts/
+**/run/
+**/data/*.json
+**/*.sqlite3
+**/*.db
+
+# ---- 模型权重 / 二进制大文件 ----
+**/*.onnx
+**/*.bin
+**/*.safetensors
+**/*.pt
+**/*.pth
+**/*.h5
+
+# ---- 系统 / 编辑器 ----
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/
+.vscode/

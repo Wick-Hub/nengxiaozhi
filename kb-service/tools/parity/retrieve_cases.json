@@ -1,0 +1,11 @@
+{
+  "cases": [
+    { "question": "一卡通丢失了怎么办", "role": "本科生", "topK": 5, "mode": "hybrid" },
+    { "question": "校园网怎么开通", "role": "本科生", "topK": 5, "mode": "hybrid" },
+    { "question": "上网资费是多少", "role": "教职工", "topK": 5, "mode": "hybrid" },
+    { "question": "宿舍报修流程", "role": "研究生", "topK": 5, "mode": "hybrid" },
+    { "question": "上网资费套餐", "role": "教职工", "topK": 5, "mode": "bm25" },
+    { "question": "如何申请校园网账号", "role": "本科生", "topK": 5, "mode": "vector" },
+    { "question": "一卡通丢失了怎么办", "role": null, "topK": 5, "mode": "hybrid", "expectDiff": true }
+  ]
+}

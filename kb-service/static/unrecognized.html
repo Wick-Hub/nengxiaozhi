@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>未识别问题 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="unrecognized.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">未</span>
+      <div class="brand-text">
+        <div class="title">未识别问题池</div>
+        <div class="subtitle">弱召回 / 拒答 / 低置信度闭环 · 聚合聚类 / 会话追溯 / 批量处理 / 反哺知识（M-S-07～09）</div>
+      </div>
+    </div>
+    <nav class="topnav">
+      <a class="btn-ghost" href="/admin" data-perm="docs.view,agents.view,gateway.view,chatlogs.view,stats.view,system.words,system.logs,rbac.view">返回后台</a>
+      <a class="btn-ghost" href="/apps" data-perm="apps.view">应用广场</a>
+      <a class="btn-ghost" href="/gov" data-perm="gov.view">导办事项</a>
+      <a class="btn-ghost" href="/" target="_blank" rel="noopener">对话页</a>
+    </nav>
+  </header>
+
+  <main class="wrap wrap-wide">
+    <section class="card un-filters">
+      <div class="field">
+        <label for="un-state">状态</label>
+        <select id="un-state"><option value="">全部状态</option></select>
+      </div>
+      <div class="field">
+        <label for="un-source">来源</label>
+        <select id="un-source"><option value="">全部来源</option></select>
+      </div>
+      <div class="field">
+        <label for="un-dept">归属部门</label>
+        <select id="un-dept"><option value="">全部部门</option></select>
+      </div>
+      <div class="field">
+        <label for="un-role">角色</label>
+        <select id="un-role"><option value="">全部角色</option></select>
+      </div>
+      <div class="field">
+        <label for="un-channel">渠道</label>
+        <select id="un-channel"><option value="">全部渠道</option></select>
+      </div>
+      <div class="field">
+        <label for="un-sort">排序</label>
+        <select id="un-sort">
+          <option value="recent">最近出现</option>
+          <option value="frequent">出现频次</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="un-from">起始日期</label>
+        <input type="date" id="un-from">
+      </div>
+      <div class="field">
+        <label for="un-to">结束日期</label>
+        <input type="date" id="un-to">
+      </div>
+      <div class="field un-q-field">
+        <label for="un-q">关键词</label>
+        <input type="search" id="un-q" placeholder="按问题原文检索">
+      </div>
+      <div class="un-filter-ops">
+        <button class="btn-primary" id="un-search">检索</button>
+        <button class="btn-ghost" id="un-reset">重置</button>
+        <button class="btn-ghost" id="un-export" data-perm="unrecognized.manage">导出 CSV</button>
+      </div>
+    </section>
+
+    <p class="un-note" id="un-note">加载中…</p>
+
+    <div class="un-clusters" id="un-clusters" hidden></div>
+
+    <div class="batch-bar" id="un-batch" hidden>
+      <span class="muted">已选 <b id="un-batch-count">0</b> 组</span>
+      <button class="btn-ghost" id="un-batch-ignore" data-perm="unrecognized.manage">忽略</button>
+      <button class="btn-ghost" id="un-batch-reopen" data-perm="unrecognized.manage">重新打开</button>
+      <span class="un-classify">
+        <input type="text" id="un-batch-dept" placeholder="归属部门（归类用）" maxlength="64">
+        <button class="btn-ghost" id="un-batch-classify" data-perm="unrecognized.manage">归类</button>
+      </span>
+      <button class="btn-ghost" id="un-batch-feedback" data-perm="unrecognized.manage">反哺知识库</button>
+      <button class="btn-ghost" id="un-batch-clear">清空选择</button>
+      <span class="un-msg" id="un-batch-msg"></span>
+    </div>
+
+    <section class="card">
+      <div class="table-head">
+        <h3>问题聚合<span class="count" id="un-count"></span></h3>
+        <div class="filters"><span class="muted" id="un-hint"></span></div>
+      </div>
+      <table class="docs un-table">
+        <thead>
+          <tr>
+            <th class="chk"><input type="checkbox" id="un-chk-all" title="全选本页"></th>
+            <th>问题</th>
+            <th>频次</th>
+            <th>来源</th>
+            <th>角色 / 渠道</th>
+            <th>业务域 / 语义簇</th>
+            <th>状态</th>
+            <th>最近出现</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="un-body"></tbody>
+      </table>
+      <div class="empty" id="un-empty" hidden>暂无未识别问题</div>
+      <div class="pager" id="un-pager" hidden>
+        <button class="btn-ghost" id="un-prev">上一页</button>
+        <span class="muted" id="un-page-info"></span>
+        <button class="btn-ghost" id="un-next">下一页</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 详情弹窗：原始会话追溯 + 同义问法 -->
+  <div class="modal" id="un-detail" hidden>
+    <div class="modal-mask" id="un-detail-mask"></div>
+    <div class="modal-box modal-wide">
+      <div class="modal-head">
+        <h3 id="un-detail-title">问题详情</h3>
+        <button class="modal-x" id="un-detail-close" title="关闭">×</button>
+      </div>
+      <div class="un-meta" id="un-detail-meta"></div>
+      <div class="un-detail-grid">
+        <section class="un-pane">
+          <h4>原始会话</h4>
+          <div class="un-session" id="un-detail-session"></div>
+        </section>
+        <section class="un-pane">
+          <h4>同义问法 <span class="muted" id="un-variant-count"></span></h4>
+          <div class="un-variants" id="un-variants"></div>
+        </section>
+      </div>
+      <p class="un-msg" id="un-detail-msg"></p>
+      <div class="un-modal-ops">
+        <button class="btn-ghost" id="un-detail-ignore" data-perm="unrecognized.manage">忽略</button>
+        <button class="btn-ghost" id="un-detail-reopen" data-perm="unrecognized.manage">重新打开</button>
+        <span class="spacer"></span>
+        <button class="btn-ghost" id="un-detail-close-btn">关闭</button>
+        <button class="btn-primary" id="un-detail-feedback" data-perm="unrecognized.manage">反哺知识库</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 反哺弹窗：生成知识草稿（status=0），发布仍走审核 -->
+  <div class="modal" id="un-feedback" hidden>
+    <div class="modal-mask" id="un-feedback-mask"></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>反哺知识库 · 生成草稿</h3>
+        <button class="modal-x" id="un-feedback-close" title="关闭">×</button>
+      </div>
+      <p class="un-banner" id="un-feedback-banner" hidden></p>
+      <div class="un-form">
+        <div class="field full">
+          <label for="un-fb-title">知识标题</label>
+          <input type="text" id="un-fb-title" maxlength="120" placeholder="默认使用问题原文">
+        </div>
+        <div class="field">
+          <label for="un-fb-dept">归属部门</label>
+          <input type="text" id="un-fb-dept" maxlength="64" placeholder="留空按记录归属 / 业务域">
+        </div>
+        <div class="field">
+          <label for="un-fb-ktype">知识类型</label>
+          <input type="text" id="un-fb-ktype" list="un-ktype-list" maxlength="32" value="faq">
+          <datalist id="un-ktype-list">
+            <option value="faq"></option>
+            <option value="policy"></option>
+            <option value="办事指南"></option>
+            <option value="通知公告"></option>
+          </datalist>
+        </div>
+        <div class="field full">
+          <label for="un-fb-content">草稿正文（Markdown，留空自动生成模板）</label>
+          <textarea id="un-fb-content" rows="10" spellcheck="false" placeholder="留空则生成包含用户问题与待补充答案的模板"></textarea>
+        </div>
+      </div>
+      <p class="un-msg" id="un-feedback-msg"></p>
+      <div class="un-modal-ops">
+        <span class="spacer"></span>
+        <button class="btn-ghost" id="un-feedback-cancel">取消</button>
+        <button class="btn-primary" id="un-feedback-submit" data-perm="unrecognized.manage">生成草稿</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="unrecognized.js"></script>
+</body>
+</html>

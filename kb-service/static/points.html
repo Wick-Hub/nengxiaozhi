@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>知识点管理 · 能小智</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="points.css">
+  <link rel="stylesheet" href="auth.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">能</span>
+      <div class="brand-text">
+        <div class="title">知识点管理</div>
+        <div class="subtitle">按知识分类集约化运维切片 · 检索 / 增删改 / 再加工 / 批量导出（M-K-10）</div>
+      </div>
+    </div>
+    <nav class="topnav">
+      <a class="btn-ghost" href="/admin" data-perm="docs.view,agents.view,gateway.view,chatlogs.view,stats.view,system.words,system.logs,rbac.view">返回后台</a>
+      <a class="btn-ghost" href="/apps" data-perm="apps.view">应用广场</a>
+      <a class="btn-ghost" href="/gov" data-perm="gov.view">导办事项</a>
+      <a class="btn-ghost" href="/unrecognized" data-perm="unrecognized.view">未识别问题</a>
+      <a class="btn-ghost" href="/" target="_blank" rel="noopener">对话页</a>
+    </nav>
+  </header>
+
+  <main class="wrap wrap-wide">
+    <!-- 筛选 -->
+    <section class="card pt-filters">
+      <div class="field">
+        <label for="pt-dept">部门</label>
+        <select id="pt-dept"><option value="">全部部门</option></select>
+      </div>
+      <div class="field">
+        <label for="pt-ktype">知识类型</label>
+        <select id="pt-ktype"><option value="">全部类型</option></select>
+      </div>
+      <div class="field">
+        <label for="pt-block">块类型</label>
+        <select id="pt-block"><option value="">全部块类型</option></select>
+      </div>
+      <div class="field grow">
+        <label for="pt-q">关键词</label>
+        <input type="search" id="pt-q" placeholder="检索正文与标题路径（空格分隔，AND 语义）">
+      </div>
+      <div class="pt-filter-ops">
+        <button class="btn-primary" id="pt-search">检索</button>
+        <button class="btn-ghost" id="pt-reset">重置</button>
+        <button class="btn-ghost" id="pt-new" data-perm="points.edit">新建知识点</button>
+      </div>
+    </section>
+
+    <p class="pt-note" id="pt-note">加载中…</p>
+
+    <!-- 批量条 -->
+    <div class="batch-bar" id="pt-batch" hidden>
+      <span class="muted">已选 <b id="pt-batch-count">0</b> 条</span>
+      <button class="btn-ghost" id="pt-export-csv" data-perm="points.export">导出 CSV</button>
+      <button class="btn-ghost" id="pt-export-md" data-perm="points.export">导出 Markdown</button>
+      <button class="btn-ghost" id="pt-export-json" data-perm="points.export">导出 JSON</button>
+      <button class="btn-ghost" id="pt-batch-clear">清空选择</button>
+      <span class="pt-msg" id="pt-batch-msg"></span>
+    </div>
+
+    <!-- 列表 -->
+    <section class="card">
+      <div class="table-head">
+        <h3>知识点<span class="count" id="pt-count"></span></h3>
+        <div class="filters"><span class="muted" id="pt-hint"></span></div>
+      </div>
+      <table class="docs pt-table">
+        <thead>
+          <tr>
+            <th class="chk"><input type="checkbox" id="pt-chk-all" title="全选本页"></th>
+            <th>知识点编号</th>
+            <th>所属文档</th>
+            <th>块类型</th>
+            <th>标题路径</th>
+            <th>字符数</th>
+            <th>内容摘要</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="pt-body"></tbody>
+      </table>
+      <div class="empty" id="pt-empty" hidden>暂无知识点</div>
+      <div class="pager" id="pt-pager" hidden>
+        <button class="btn-ghost" id="pt-prev">上一页</button>
+        <span class="muted" id="pt-page-info"></span>
+        <button class="btn-ghost" id="pt-next">下一页</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 编辑弹窗 -->
+  <div class="modal" id="pt-modal" hidden>
+    <div class="modal-mask" id="pt-modal-mask"></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="pt-modal-title">编辑知识点</h3>
+        <button class="modal-x" id="pt-close" title="关闭">×</button>
+      </div>
+
+      <div class="pt-meta" id="pt-modal-meta"></div>
+
+      <div class="pt-form">
+        <div class="field">
+          <label for="pt-f-title">标题路径</label>
+          <input type="text" id="pt-f-title" placeholder="如：校园网 / 开户流程">
+        </div>
+        <div class="field">
+          <label for="pt-f-block">块类型</label>
+          <select id="pt-f-block">
+            <option value="para">para · 段落</option>
+            <option value="table">table · 整表</option>
+            <option value="faq">faq · 问答对</option>
+            <option value="image">image · 图片</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="pt-f-images">图片对象键（逗号分隔，留空表示无图）</label>
+          <input type="text" id="pt-f-images" placeholder="uploads/images/xxx.png">
+        </div>
+        <div class="field full">
+          <label for="pt-f-content">正文（Markdown 富文本）</label>
+          <textarea id="pt-f-content" rows="12" spellcheck="false"></textarea>
+        </div>
+      </div>
+
+      <div class="pt-ops">
+        <button class="btn-ghost" id="pt-op-append-toggle">＋ 添加文本内容</button>
+        <button class="btn-ghost" id="pt-op-remove-toggle">－ 删除内容</button>
+        <button class="btn-ghost" id="pt-op-image-toggle">🖼 插入图片</button>
+      </div>
+
+      <div class="pt-op-panel" id="pt-op-append" hidden>
+        <div class="field">
+          <label for="pt-append-text">追加文本</label>
+          <textarea id="pt-append-text" rows="3" placeholder="要追加到切片末尾的内容"></textarea>
+        </div>
+        <div class="pt-op-row">
+          <label class="pt-radio"><input type="radio" name="pt-append-pos" value="end" checked> 追加到末尾</label>
+          <label class="pt-radio"><input type="radio" name="pt-append-pos" value="start"> 插入到开头</label>
+          <button class="btn-ghost" id="pt-append-run">执行追加</button>
+        </div>
+      </div>
+
+      <div class="pt-op-panel" id="pt-op-remove" hidden>
+        <div class="field">
+          <label for="pt-remove-text">删除片段（与正文完全一致，删除首次出现）</label>
+          <textarea id="pt-remove-text" rows="3" placeholder="也可留空，改用下方字符区间"></textarea>
+        </div>
+        <div class="pt-op-row">
+          <input type="text" id="pt-remove-start" class="pt-num" placeholder="起始字符">
+          <span class="muted">→</span>
+          <input type="text" id="pt-remove-end" class="pt-num" placeholder="结束字符">
+          <button class="btn-ghost" id="pt-remove-run">执行删除</button>
+        </div>
+      </div>
+
+      <div class="pt-op-panel" id="pt-op-image" hidden>
+        <div class="field">
+          <label for="pt-image-key">图片对象键（须属于该文档）</label>
+          <input type="text" id="pt-image-key" placeholder="uploads/images/xxx.png">
+        </div>
+        <div class="pt-op-row">
+          <button class="btn-ghost" id="pt-image-run">插入图片</button>
+        </div>
+      </div>
+
+      <p class="pt-msg" id="pt-modal-msg"></p>
+
+      <div class="pt-modal-ops">
+        <button class="btn-ghost danger" id="pt-delete" data-perm="points.edit">删除该知识点</button>
+        <span class="spacer"></span>
+        <button class="btn-ghost" id="pt-cancel">取消</button>
+        <button class="btn-primary" id="pt-save" data-perm="points.edit">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 新建弹窗 -->
+  <div class="modal" id="pt-create" hidden>
+    <div class="modal-mask" id="pt-create-mask"></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>新建知识点</h3>
+        <button class="modal-x" id="pt-create-close" title="关闭">×</button>
+      </div>
+      <div class="pt-form">
+        <div class="field">
+          <label for="pt-new-doc">所属文档编号（如 D001）</label>
+          <input type="text" id="pt-new-doc" placeholder="D001">
+        </div>
+        <div class="field">
+          <label for="pt-new-block">块类型</label>
+          <select id="pt-new-block">
+            <option value="para">para · 段落</option>
+            <option value="table">table · 整表</option>
+            <option value="faq">faq · 问答对</option>
+            <option value="image">image · 图片</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="pt-new-title">标题路径</label>
+          <input type="text" id="pt-new-title" placeholder="如：校园网 / 开户流程">
+        </div>
+        <div class="field full">
+          <label for="pt-new-content">正文</label>
+          <textarea id="pt-new-content" rows="10" spellcheck="false"></textarea>
+        </div>
+      </div>
+      <p class="pt-msg" id="pt-create-msg"></p>
+      <div class="pt-modal-ops">
+        <span class="spacer"></span>
+        <button class="btn-ghost" id="pt-create-cancel">取消</button>
+        <button class="btn-primary" id="pt-create-submit">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script src="points.js"></script>
+</body>
+</html>

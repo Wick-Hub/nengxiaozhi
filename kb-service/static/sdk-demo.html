@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>能小智嵌入 SDK · 第三方站点演示</title>
+  <style>
+    :root { --brand: #1f4fa8; --ink: #1d2733; --muted: #667085; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 15px/1.7 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; color: var(--ink); background: #f4f6fa; }
+    header { background: linear-gradient(120deg, #1f4fa8, #2f6fd0); color: #fff; padding: 40px 24px 56px; }
+    header .wrap, main.wrap { max-width: 1080px; margin: 0 auto; }
+    header .tag { opacity: .8; letter-spacing: .16em; font-size: 12px; }
+    h1 { margin: 8px 0 10px; font-size: 28px; }
+    header p { margin: 0; max-width: 640px; opacity: .92; }
+    main.wrap { display: grid; grid-template-columns: 1.6fr 1fr; gap: 24px; margin-top: -28px; padding-bottom: 60px; }
+    .card { background: #fff; border-radius: 14px; padding: 24px; box-shadow: 0 8px 30px rgba(23, 43, 77, .08); }
+    .card h2 { font-size: 18px; margin: 0 0 12px; }
+    .card p { color: var(--muted); margin: 0 0 12px; }
+    .news li { margin-bottom: 12px; }
+    .news a { color: var(--brand); text-decoration: none; }
+    label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+    input { width: 100%; padding: 9px 11px; border: 1px solid #d0d7e2; border-radius: 8px; font: inherit; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    button { border: 0; border-radius: 8px; padding: 9px 14px; font: inherit; cursor: pointer; background: #e8eefb; color: #1f4fa8; }
+    button.primary { background: var(--brand); color: #fff; }
+    #log { margin: 14px 0 0; padding: 10px 12px; background: #0f1b2d; color: #c9d7ef; border-radius: 8px; font: 12px/1.6 ui-monospace, Consolas, monospace; min-height: 72px; max-height: 180px; overflow: auto; white-space: pre-wrap; }
+    code { background: #eef2f9; border-radius: 4px; padding: 1px 5px; font-size: 12.5px; }
+    @media (max-width: 860px) { main.wrap { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="tag">第三方站点模拟 · 能小智嵌入 SDK</div>
+      <h1>智慧校园服务网</h1>
+      <p>本页模拟学校二级网站：不引入任何框架，只加一行 SDK 代码，即可在右下角获得可问答的 AI 浮窗。</p>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>校园通知</h2>
+      <ul class="news">
+        <li><a href="#">关于 2026 年秋季学期校园卡补办流程的通知</a><span style="color:#98a2b3"> · 10-18</span></li>
+        <li><a href="#">图书馆借阅规则调整说明</a><span style="color:#98a2b3"> · 10-16</span></li>
+        <li><a href="#">信息化服务大厅周末值班安排</a><span style="color:#98a2b3"> · 10-12</span></li>
+      </ul>
+      <h2 style="margin-top:24px">嵌入方式</h2>
+      <p>自动初始化：</p>
+      <pre style="background:#eef2f9;border-radius:8px;padding:12px;overflow:auto;font-size:12.5px">&lt;script src="https://ai.example.edu.cn/sdk/nxz.js"
+        data-channel="campus" data-position="right"&gt;&lt;/script&gt;</pre>
+      <p>编程式：<code>NengXiaoZhi.init({ channel: 'campus' }).setToken(token).open()</code></p>
+    </section>
+
+    <aside class="card">
+      <h2>浮窗演示</h2>
+      <p>输入已上架的渠道编码；登录后的站点可把 JWT 通过 <code>setToken</code> 透传给浮窗。</p>
+      <label for="demo-channel">渠道编码</label>
+      <input id="demo-channel" placeholder="例如 campus">
+      <label for="demo-token">用户令牌（可选）</label>
+      <input id="demo-token" placeholder="Bearer 前的 JWT">
+      <div class="row">
+        <button class="primary" id="demo-load">加载 SDK</button>
+        <button id="demo-open">打开</button>
+        <button id="demo-close">关闭</button>
+        <button id="demo-reset">重建</button>
+      </div>
+      <pre id="log">等待加载…</pre>
+    </aside>
+  </main>
+
+  <script>
+    (function () {
+      var widget = null;
+      var loaded = false;
+      var logEl = document.getElementById('log');
+      var params = new URLSearchParams(location.search);
+      document.getElementById('demo-channel').value = params.get('channel') || '';
+      document.getElementById('demo-token').value = params.get('token') || '';
+
+      function log(line) {
+        logEl.textContent += '\n' + new Date().toLocaleTimeString() + '  ' + line;
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function loadSdk() {
+        var channel = document.getElementById('demo-channel').value.trim();
+        var token = document.getElementById('demo-token').value.trim();
+        if (!channel) { log('请先填写渠道编码'); return; }
+        if (!loaded) {
+          var script = document.createElement('script');
+          script.src = 'sdk/nxz.js';
+          script.onload = function () { loaded = true; start(channel, token); };
+          script.onerror = function () { log('SDK 加载失败'); };
+          document.body.appendChild(script);
+        } else {
+          start(channel, token);
+        }
+      }
+
+      function start(channel, token) {
+        if (widget) widget.destroy();
+        widget = window.NengXiaoZhi.init({
+          channel: channel,
+          token: token,
+          label: '在线咨询',
+          onReady: function () { log('SDK ready：iframe 已就绪'); },
+          onOpen: function () { log('浮窗已打开'); },
+          onState: function (state) { log('身份状态：' + JSON.stringify(state)); },
+        });
+        if (!widget) { log('初始化失败：缺少 channel'); return; }
+        log('已初始化 channel=' + channel + '，version=' + window.NengXiaoZhi.version);
+        widget.open();
+      }
+
+      document.getElementById('demo-load').onclick = loadSdk;
+      document.getElementById('demo-open').onclick = function () { if (widget) widget.open(); };
+      document.getElementById('demo-close').onclick = function () { if (widget) widget.close(); };
+      document.getElementById('demo-reset').onclick = function () {
+        if (widget) { widget.destroy(); widget = null; log('已销毁实例'); }
+      };
+      if (document.getElementById('demo-channel').value) loadSdk();
+    })();
+  </script>
+</body>
+</html>
