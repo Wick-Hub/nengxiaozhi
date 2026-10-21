@@ -312,7 +312,10 @@ def _ensure_agents(dry: bool) -> tuple[dict[str, int], int]:
             {
                 **spec,
                 "agentType": "chat",
-                "modelCode": "deepseek-chat",
+                # 跟随全局默认模型（.env 的 LLM_MODEL = 网关真实别名）。
+                # 勿硬编码厂商模型名（如 deepseek-chat）：网关只认自己的 alias，
+                # 且业务 Key 的 AllowedModels 只授权该 alias，写错会被 403 model_not_allowed。
+                "modelCode": "default",
                 "visibleRoles": ["全部"],
                 "status": 1,
             }
