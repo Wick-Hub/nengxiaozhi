@@ -856,7 +856,7 @@ python -m app.main
     详情会话、JSON 反哺禁用、批量状态、CSV 下载、零 JS 错误）；
     全量 `pytest` **1116 passed / 15 skipped**（共 1131 条）。
 
-### 批4 · 外部集成（进行中，6/9）
+### 批4 · 外部集成（已完成，9/9）
 
 - **任务 4.1 统一身份认证（CAS）** ✅ 关联 I-01 / P-B-03。
   - **流程**：`GET /api/auth/cas/login` → CAS 登录页 → `/api/auth/cas/callback?ticket=` →
@@ -1095,7 +1095,7 @@ python -m app.main
     真 Chromium **42 PASS**（对话页操作条、点踩原因校验、分享弹窗、公开卡片与引用、
     计数翻转、Markdown 下载、后台 KPI/详情/处理/筛选/导出、零 JS 错误）。
 
-### 批5 · 交付化（进行中）
+### 批5 · 交付化（5.1–5.4、5.6 已完成；5.5 待校方文档）
 
 - **任务 5.1 生产部署与 HTTPS** ✅
   - **常驻守护**：`deploy/service_supervisor.py` 启动 uvicorn，退出后 5 秒自动拉起；
