@@ -135,7 +135,12 @@ class Embedder:
 
         opts = ort.SessionOptions()
         opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        opts.intra_op_num_threads = 0  # 由 onnxruntime 自行决定
+        # 小模型单条推理用不满多核；不限制时线程池会空转，与精排会话互相抢 CPU
+        opts.inter_op_num_threads = 1
+        if settings.embed_threads > 0:
+            opts.intra_op_num_threads = settings.embed_threads
+        else:
+            opts.intra_op_num_threads = 0  # 由 onnxruntime 自行决定
         self._session = ort.InferenceSession(
             str(onnx_file),
             sess_options=opts,

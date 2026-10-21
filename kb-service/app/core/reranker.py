@@ -98,6 +98,11 @@ class Reranker:
 
         opts = ort.SessionOptions()
         opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        # 默认 ORT 会按逻辑核开满线程并自旋，实测 18 核机上单次 10 条候选
+        # 墙钟相同但 CPU 从 3.5s 涨到 7~10s；生产按物理核/并发配额限制更稳。
+        opts.inter_op_num_threads = 1
+        if settings.rerank_threads > 0:
+            opts.intra_op_num_threads = settings.rerank_threads
         self._session = ort.InferenceSession(
             str(weight), sess_options=opts, providers=["CPUExecutionProvider"]
         )

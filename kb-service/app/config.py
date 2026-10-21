@@ -82,11 +82,15 @@ class Settings(BaseSettings):
     # 与 kb-engine 对齐：Node 版使用 Xenova 的 ONNX 版 bge-small-zh-v1.5（512 维，fp32）
     embed_model: str = "Xenova/bge-small-zh-v1.5"
     embed_dim: int = 512
+    #: 嵌入 ONNX 的 intra-op 线程数；0 = ORT 默认（空闲线程池会空转占 CPU）
+    embed_threads: int = 0
     # HuggingFace 镜像（离线交付时可指向内网镜像或置空禁用下载）
     hf_endpoint: str = "https://hf-mirror.com"
     rerank_model: str = "onnx-community/bge-reranker-v2-m3-ONNX"
     rerank_enabled: bool = True
     rerank_topn: int = 30
+    #: ONNX 精排的 intra-op 线程数；0 = ORT 默认（吃满逻辑核，实测空转浪费约一倍 CPU）
+    rerank_threads: int = 0
     top_k: int = 5
     rrf_k: int = 60
     retrieve_mode: str = "hybrid"

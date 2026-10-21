@@ -73,6 +73,23 @@ def _rel(path: Path, root: Path) -> str:
         return path.as_posix()
 
 
+def _path_meta(key: str) -> dict:
+    """按目录约定推导部门/知识类型，供无 frontmatter 的格式兜底。
+
+    ``02-财务处/常见问题/x.xlsx`` → ``{"dept": "财务处", "ktype": "常见问题"}``。
+    文件自带元数据时以文件为准（兜底优先级最低）。
+    """
+    parts = Path(key).parts
+    if len(parts) < 2:
+        return {}
+    head, _, rest = parts[0].partition("-")
+    dept = rest if head.isdigit() and rest else parts[0]
+    meta = {"dept": dept}
+    if len(parts) >= 3 and parts[1] in kb_repo.KTYPE_MAP:
+        meta["ktype"] = parts[1]
+    return meta
+
+
 def sync_knowledge_base(root: str | Path | None = None, txn=None) -> dict:
     """执行增量同步，返回 ``{added, updated, deleted, skipped, errors, warnings}``。"""
     base = Path(root or settings.knowledge_dir)
@@ -121,7 +138,9 @@ def sync_knowledge_base(root: str | Path | None = None, txn=None) -> dict:
                 summary["skipped"] += 1
                 continue
 
-            parsed = parse_doc(f, image_sink=image_parser.save_original)
+            parsed = parse_doc(
+                f, fallback=_path_meta(key), image_sink=image_parser.save_original
+            )
             if not parsed["ok"]:
                 summary["errors"].append(f"{key}：{parsed['error']}")
                 continue

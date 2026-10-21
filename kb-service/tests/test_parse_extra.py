@@ -799,6 +799,23 @@ def test_parse_doc_collects_image_warning(tmp_path: Path, monkeypatch: pytest.Mo
     assert result["doc_meta"]["title"] == "公告"
 
 
+def test_parse_doc_uses_path_fallback_for_structured_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """XLSX/JSON 无 frontmatter，增量同步须按目录名兜底 dept/ktype。"""
+    monkeypatch.setattr(settings, "upload_dir", tmp_path)
+    from app.services import kb_admin
+    from app.services.kb_sync import _path_meta
+
+    path = tmp_path / "常见问题.json"
+    path.write_text(json.dumps([{"q": "空调怎么开？", "a": "联系后勤处。"}], ensure_ascii=False), encoding="utf-8")
+
+    result = kb_admin.parse_doc(path, fallback=_path_meta("02-财务处/常见问题/常见问题.json"))
+    assert result["ok"] is True
+    assert result["doc_meta"]["dept"] == "财务处"
+    assert result["doc_meta"]["ktype"] == "常见问题"
+
+
 def test_supported_formats_sorted() -> None:
     from app.services import kb_admin
 

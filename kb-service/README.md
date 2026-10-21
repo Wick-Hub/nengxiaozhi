@@ -94,8 +94,16 @@ kb-service/
 │                        migrate_integrations_4_8.py（本地模型/MCP/智能体三表，幂等）
 │                        verify_integrations.py（4.8 配置/加密/适配器/路由）· verify_integrations_ui.py（4.8 浏览器验收）
 │                        verify_deploy.py（5.1 生产部署：配置/证书/守护重启/HTTPS 端到端）
+│                        build_offline_bundle.py（5.2 离线包构建）· offline_db_init.py（5.2 建库/迁移/种子）
+│                        verify_offline_bundle.py（5.2 安装/升级/回滚/数据留存验收）
+│                        perf_load.py（5.3 检索微基准 + 闭环 HTTP 压测 + 8C 绑定 + 容量报告）
+│                        verify_acceptance.py（5.4 验收文档校验 + 接口彩排，输出 rehearsal.md）
+│                        verify_data_init.py（5.5 样例标记/PII/引用回溯审计，支持仅源文件预检）
+│                        verify_security_5_6.py（5.6 鉴权/限流/加密/审计/RBAC/生产基线自查）
 ├─ deploy/               生产部署（任务 5.1）：守护进程、Nginx TLS 模板、自签证书、
 │                        Windows 计划任务脚本、Linux systemd、生产 env 模板（见 deploy/README.md）
+│  └─ offline/           离线交付（任务 5.2）：Windows/Linux 安装·升级·回滚脚本、
+│                        运行时依赖清单、OFFLINE-INSTALL.md 手册
 ├─ tests/                骨架 + 引擎各层 + 索引/会话/编排 + API 契约 + 前端静态资源 + MySQL 数据层与分支桩
 ├─ pyproject.toml
 └─ .env.example
@@ -152,9 +160,23 @@ python -m app.main
 > **4.4 通行查询智能体**、**4.5 导办事项与票据**、**4.6 客服体系**、
 > **4.7 ASR 语音输入**、**4.8 本地模型/MCP/第三方智能体**与
 > **4.9 分享问答与用户反馈**（**批4 9/9 完成**）；
-> **批5 5.1 生产部署与 HTTPS 已完成**。
-> 最新测试基线（2026-10-21）：`pytest` **1243 passed / 82 skipped**（共 1325 条）；
-> `tools/verify_*.py` **66 个**；4.1 SSO 验收 HTTP **23 PASS** + 浏览器
+> **批5 5.1 生产部署与 HTTPS、5.2 离线交付包、5.3 性能与容量验证、5.4 验收用例与演示脚本、5.6 安全加固验收已完成**。
+> 5.4 交付物：`artifacts/acceptance/验收用例清单.md`（99 条需求 + AC-01～AC-19 + 负偏差）、
+> `演示脚本.md`（15 分钟六幕）、`佐证材料清单.md`（E-01～E-59 / S-01～S-06）、
+> `rehearsal.md`（接口彩排 **PASS 9 / WARN 0 / FAIL 0**）、
+> `交付前检查清单.md`（软件交付/上线/验收三阶段 Go-No-Go、阻断项与复核命令）；运行
+> `python tools/verify_acceptance.py [--rehearse]` 复核。
+> 5.5 数据初始化审计：`tools/verify_data_init.py`（`--sources-only` 用于真实文档入库前预检），
+> 报告 `artifacts/acceptance/data-init-report.md`；替换流程与回滚预案见
+> `artifacts/acceptance/数据初始化与真实文档替换方案.md`（真实文档待校方提供）。
+> 5.6 安全加固验收：`tools/verify_security_5_6.py`（`AUTH_ENABLED=true` / 限流开启 / MySQL），
+> **PASS 50 / WARN 0 / FAIL 0**，报告 `artifacts/acceptance/security-report.md`；覆盖 401/403
+> 三态、AES/JWT 轮换、管理/登录/问答限流、敏感词、操作日志脱敏、RBAC 与生产配置基线。
+> 最新测试基线（2026-10-21）：`pytest` **1251 passed / 75 skipped**（共 1326 条；
+> tokenizers 就绪后原先跳过的 7 项嵌入/精排用例转为真实执行）；
+> `tools/verify_*.py` **70 个**；5.2 离线包验收 **57 PASS / 0 FAIL**
+> （安装 → 升级 → 回滚 → 数据留存，含 BGE 512 维加载）；5.3 压测报告
+> `artifacts/perf-report.md`（8C 绑定：精排关 16 并发 P95 275ms / 精排开 8 并发超 3s）；4.1 SSO 验收 HTTP **23 PASS** + 浏览器
 > **17 PASS**；4.2 数据中台验收 HTTP JSON **55** / MySQL **53 PASS** + 浏览器
 > **28 PASS**；4.3 问数验收 HTTP **56 PASS** + 浏览器 **31 PASS**；
 > 4.4 通行验收 HTTP **72 PASS** + 浏览器 **55 PASS**；
@@ -1096,6 +1118,51 @@ python -m app.main
   - ⚠ **实机边界**：本机未安装宿主 Nginx，HTTPS 段用 Docker Nginx 完成；正式证书签发、
     防火墙策略与服务器重启演练需在交付环境按 `deploy/README.md` 执行。
 
+- **任务 5.2 离线交付包** ✅
+  - **构建**：`tools/build_offline_bundle.py` 产出 `nengxiaozhi-offline-<版本>-<时间戳>/`，
+    含应用源码、初始化 SQL、12 份示例知识、BGE 嵌入/精排模型（约 650 MB）、
+    目标平台全部 wheel、Windows/Linux 脚本、`BUILD-INFO.json`、`MANIFEST.json`、`SHA256SUMS`。
+    wheel 用 `pip download --only-binary=:all: --platform ...` 下载，**不含 PyTorch /
+    sentence-transformers**；可选 `--with-docker-images` 导出 MySQL/Nginx 镜像 tar。
+  - **安装布局**：`releases/<版本>-<时间戳>` + `current` 联接 + `shared/{.env,data,uploads,logs,
+    run,models,knowledge-base}`；升级创建新 release、切换 `current`，业务数据不覆盖；
+    回滚直接切回旧 release。Windows 用目录联接，Linux 用符号链接。
+  - **离线依赖**：目标机只需同版本 64 位 Python；`pip install --no-index --find-links wheels`
+    全程不联网，安装后执行 `import app.main` 与 `pip check` 自检。
+  - **数据库**：`tools/offline_db_init.py` 空库导入 `schema.sql`（38 条语句）、
+    顺序执行 **19 个幂等迁移**；仅全新安装执行 `seed_auth.py`（7 角色 / 4 演示账号，
+    升级不重复写）。已用临时库实测：**39 张表、19 个迁移全 ok、admin 绑定正确**。
+  - **验收**：`tools/verify_offline_bundle.py` 对正式包 **57 PASS / 0 FAIL / 0 WARN**——
+    包完整性与 SHA-256、无敏感/运行产物、PS1 UTF-8 BOM、安装、`pip check`、
+    BGE 嵌入 **512 维**实加载、健康检查、升级切换、回滚恢复、共享数据留存、安装历史。
+  - **手册**：`deploy/offline/OFFLINE-INSTALL.md`（构建参数、Windows/Linux 安装、
+    生产配置、初始账号、升级/回滚、故障排查）。
+  - ⚠ **边界**：Linux 安装脚本已实现但本机无 Linux 环境，动态验收在 Windows 完成；
+    正式交付前需在目标 Linux 机按手册复跑安装/升级/回滚。Docker 镜像导出为可选步骤。
+  - ✅ **5.6 后重建（2026-10-21 16:45）**：`nengxiaozhi-offline-0.1.0-20261021-164520-5.6`
+    （431 文件 / 775 MB）已纳入 5.6 限流、CORS 模板与同步元数据修复，
+    `verify_offline_bundle.py` **57 PASS / 0 FAIL / 0 WARN**（`artifacts/verify-offline-5.6.log`）。
+
+- **任务 5.3 性能与容量验证** ✅
+  - **工具**：`tools/perf_load.py` 同时支持检索链微基准（嵌入/召回/精排/完整 retrieve + 进程
+    CPU 秒）、切片规模模拟（克隆到 350/3500/10000）、闭环 HTTP 压测（流式/非流式、每档预热、
+    TTFT 与总耗时分位、进程/主机 CPU、RSS），可用 `--affinity 8` 把服务绑定到 8 核，
+    按 8C16G 目标机口径实测；压测数据按会话前缀清理，可重复执行。
+  - **8C16G 实测（精排关闭，生产默认）**：16 并发 0% 错误，非流式 P95 **275ms**、
+    流式首 token P95 **147ms** / 全程 P95 **417ms**；32 并发非流式 P95 415ms、
+    处理能力 **≥96 RPS**，进程仅 2.4/8 核、RSS 259MB。
+  - **精排代价**：topN=10/4 线程时单请求约 **2.68–2.94 CPU 秒**、单实例 **1.6–1.8 QPS**；
+    8C 下 4 并发首 token P95 **1767–2066ms** 达标，8 并发 **3759–4520ms** 超 3s，
+    RSS 峰值 1256MB。故生产模板 `RERANK_ENABLED=0`、`RERANK_TOPN=10`、
+    `RERANK_THREADS=4`，精排仅作低并发质量模式。
+  - **线程调优**：ORT 默认开满逻辑核并自旋，精排 10 候选墙钟不变但 CPU 7–10s；固定
+    `EMBED_THREADS=2` + `RERANK_THREADS=4` 后降到 3.8 CPU 秒/请求，嵌入 P95 31ms → 5ms。
+  - **规模**：10,000 切片时混合召回 P95 **240ms**（35 切片为 0.82ms），10k 内有余量；
+    5 万以上需 Milvus（5.7）。
+  - **报告**：`artifacts/perf-report.md`（汇总）+ 6 份微基准/HTTP 原始 JSON/Markdown。
+  - ⚠ **边界**：LLM 为 mock，不含网关与模型生成；MySQL 与压测客户端不受 8 核绑定；
+    交付前需在目标 8C16G 机复跑同一命令。
+
 ### 批1 · 引擎与服务层（已完成）
 
 - **任务 1.1 工程骨架** ✅ 应用可启动、路由契约就位、配置加载正常。
@@ -1450,7 +1517,8 @@ pytest -q      # 764 项：骨架 + 解析/切片 + 向量 + 检索 + 精排 + �
 
 ## 关键约定
 
-- **检索参数**与原型一致：RRF `K=60`、`topK=5`、召回候选 `RERANK_TOPN=30`、切片 `400/60/40`。
+- **检索参数**：RRF `K=60`、`topK=5`、切片 `400/60/40` 与原型一致；精排候选默认 30（原型值），
+  生产模板按 5.3 压测改为 `RERANK_TOPN=10` 且默认关闭精排（见 `artifacts/perf-report.md`）。
 - **角色缺省**：不传角色按「访客」处理，不再放行全部知识。
 - **认证**（任务 1.13）：`Authorization: Bearer <jwt>`；**无 token 即访客**，公开接口与问答照常可用。
   管理接口（`/api/docs`、`/api/sync`）在 **`AUTH_ENABLED=true`** 时要求管理员（401/403）；
@@ -1713,6 +1781,11 @@ python tools/verify_gateway.py \                    # 在线：真实网关端�
 # 生产部署（任务 5.1）：配置 / 证书 / 守护重启 / Docker Nginx HTTPS 端到端
 python tools/verify_deploy.py                      # 61 项（无 Docker 时加 --skip-docker）
 python tools/verify_deploy.py --skip-docker
+
+# 离线交付（任务 5.2）：构建 → 验收（安装/升级/回滚/模型加载/数据留存）
+python tools/build_offline_bundle.py --out dist/offline --reuse-wheels .build/wheels-cache
+python tools/verify_offline_bundle.py --bundle dist/offline/<包名> --link-models
+python tools/offline_db_init.py --schema ../database/schema.sql --seed-auth   # 全新 MySQL 库手工初始化
 
 # 集成中心（任务 4.8）：三表结构 / 加密落库 / mock+live 适配器 / 本地路由 / 审计 / RBAC
 python tools/verify_integrations.py                # JSON 99 项

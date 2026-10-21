@@ -42,6 +42,7 @@ def parse_doc(
     file_path: str | Path,
     overrides: dict | None = None,
     *,
+    fallback: dict | None = None,
     image_sink=None,
     self_image_key: str | None = None,
     default_title: str | None = None,
@@ -50,11 +51,14 @@ def parse_doc(
 
     对齐原型 ``parseDoc``：overrides 优先于文件元数据，缺省回落到「未分类」。
 
+    :param fallback: 元数据兜底（同步时按目录名推导 dept/ktype，供 XLSX/JSON
+        等无 frontmatter 的格式使用），优先级低于文件元数据
     :param image_sink: 内嵌图片落盘回调（``None`` 则不抽取内嵌图片）
     :param self_image_key: 图片型文件自身的对象键（上传件为 ``uploads/<safe_name>``）
     :param default_title: 标题兜底（上传件用**原始文件名**，避免时间戳前缀进标题）
     """
     overrides = overrides or {}
+    fallback = fallback or {}
     path = Path(file_path)
     try:
         parsed = parse_file(
@@ -68,8 +72,8 @@ def parse_doc(
     roles = overrides.get("visibleRoles") or overrides.get("visible_roles")
     doc_meta = {
         "title": overrides.get("title") or meta.get("title") or default_title or path.stem,
-        "dept": overrides.get("dept") or meta.get("dept") or "未分类",
-        "ktype": overrides.get("ktype") or meta.get("ktype") or "未分类",
+        "dept": overrides.get("dept") or meta.get("dept") or fallback.get("dept") or "未分类",
+        "ktype": overrides.get("ktype") or meta.get("ktype") or fallback.get("ktype") or "未分类",
         "visible_roles": (
             ",".join(roles)
             if isinstance(roles, (list, tuple)) and roles

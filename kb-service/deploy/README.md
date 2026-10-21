@@ -24,6 +24,8 @@ cp deploy/env.production.example .env
 - `INTEGRATION_*_PROVIDER`：本地模型/MCP/第三方智能体测试默认 `mock`；平台授权与地址
   就绪后再改 `live`，Token 只写服务端 `.env` 或集成中心（落库 AES 加密）；
 - `AES_KEY` / `JWT_SECRET`：各生成一份，命令见模板注释；
+- `CORS_ALLOW_ORIGINS`：填门户与允许嵌入的第三方站点（含协议，逗号分隔），生产禁止 `*`；
+  身份走 `Authorization` 头，`CORS_ALLOW_CREDENTIALS=0`（鉴权开启且来源为 `*` 时启动会告警）；
 - 生产必须 `AUTH_ENABLED=true`、`LLM_MOCK=0`、`HF_ENDPOINT=`（断网环境不下载模型）。
 
 `.env` 含密钥：Linux `chmod 600 .env`；Windows 用 `icacls .env /inheritance:r /grant:r "%USERNAME%:R"` 限制读取。

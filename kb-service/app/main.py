@@ -62,6 +62,8 @@ app = FastAPI(
 _cors = cors_options(settings)
 if settings.cors_allow_credentials and "*" in _cors["allow_origins"]:
     logger.warning("CORS_ALLOW_ORIGINS=* 不允许携带凭证，已自动关闭 allow_credentials")
+if settings.auth_enabled and "*" in _cors["allow_origins"]:
+    logger.warning("鉴权已开启但 CORS_ALLOW_ORIGINS=*，生产建议收敛为门户与嵌入站点白名单")
 app.add_middleware(CORSMiddleware, **_cors)
 
 app.include_router(api_router, prefix="/api")

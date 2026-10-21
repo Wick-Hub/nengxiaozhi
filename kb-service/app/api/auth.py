@@ -24,6 +24,7 @@ from app.models.schemas import ApiResult, CasExchangeRequest, LoginData, LoginRe
 from app.security import permissions
 from app.security.auth import create_token
 from app.security.deps import Principal, get_current_user
+from app.security.ratelimit import rate_limit
 from app.services import auth_service, sso
 
 logger = logging.getLogger(__name__)
@@ -63,7 +64,12 @@ def _issue_session(ident: dict) -> dict:
     ).model_dump()
 
 
-@router.post("/login", response_model=ApiResult, summary="登录签发 JWT")
+@router.post(
+    "/login",
+    response_model=ApiResult,
+    summary="登录签发 JWT",
+    dependencies=[Depends(rate_limit("auth"))],
+)
 def login(payload: LoginRequest):
     try:
         ident = auth_service.authenticate(payload.user_no, payload.role, payload.password)
@@ -126,7 +132,12 @@ def cas_callback(request: Request, ticket: str = "", redirect: str = "/"):
     return RedirectResponse(f"{target}#cas={quote(code)}", status_code=302)
 
 
-@router.post("/cas/exchange", response_model=ApiResult, summary="CAS 交换码换 JWT")
+@router.post(
+    "/cas/exchange",
+    response_model=ApiResult,
+    summary="CAS 交换码换 JWT",
+    dependencies=[Depends(rate_limit("auth"))],
+)
 def cas_exchange(payload: CasExchangeRequest):
     try:
         claims = sso.consume_exchange_code(payload.code)

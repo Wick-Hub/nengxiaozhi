@@ -55,3 +55,4 @@ Write-InstallInfo -Root $root -Release $target -BundleDir $target -Action "rollb
 Write-Host ""
 Write-Host "回滚完成：$targetName"
 Write-Warning "数据库迁移不回退：新版本新增的表/列会保留，旧版本通常可忽略；如需精确回退请用 -RestoreDb 指定升级前备份。"
+exit 0

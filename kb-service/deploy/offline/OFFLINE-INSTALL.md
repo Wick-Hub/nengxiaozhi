@@ -75,7 +75,8 @@ cd <离线包>\scripts
 4. 生成 `shared\.env`（来自 `deploy/env.production.example`），
    检测 `__SET_*__` 占位符，未填写则**拒绝继续**；
 5. 展开 release、创建 venv、`pip install --no-index` 安装 wheel；
-6. `KB_STORE=mysql` 时执行 `tools/offline_db_init.py`（空库建表 + 幂等迁移）；
+6. `KB_STORE=mysql` 时执行 `tools/offline_db_init.py`：空库导入 `schema.sql`、
+   依次执行 19 个幂等迁移，并仅在**全新安装**时写入 RBAC 种子（7 个角色 + 4 个演示账号）；
 7. 启动服务并轮询 `/api/health`。
 
 常用参数：
@@ -131,6 +132,19 @@ sudo ./install.sh --install-dir /opt/nengxiaozhi
 
 密钥生成参考 `deploy/env.production.example` 注释。修改 `.env` 后需重启服务；
 升级生成的新 release 会重新复制 `shared/.env`。
+
+### 初始账号（仅 MySQL 全新安装）
+
+全新安装由 `seed_auth.py` 写入 7 个角色与 4 个演示账号（`admin`、`20230001`、
+`20240001`、`T10001`）。演示账号初始**没有密码**，仅用于首次进入系统：
+
+1. 立即用 `admin` 登录，在「系统管理 · 管理员账号」设置强密码；
+2. 停用或删除不需要的演示账号，按学校花名册创建真实管理员；
+3. 生产环境务必保持 `AUTH_ENABLED=true`，不要用免密账号长期运行。
+
+升级不会重复写入种子，现有账号与密码不受影响。若学校已提前完成数据库
+初始化与账号导入，安装时使用 `-SkipDbInit` / `--skip-db-init`，由 DBA 单独执行
+结构与迁移脚本。
 
 ## 7. 升级
 

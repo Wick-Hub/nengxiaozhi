@@ -220,13 +220,13 @@ function New-Release {
     $requirements = Join-Path $BundleDir "scripts\requirements-runtime.txt"
     if (-not (Test-Path $requirements)) { $requirements = Join-Path $appDir "deploy\offline\requirements-runtime.txt" }
     Write-Host "离线安装依赖（--no-index）…"
-    & $venvPython -m pip install --no-index --find-links $wheels --upgrade pip setuptools wheel
+    & $venvPython -m pip install --no-index --find-links $wheels --upgrade pip setuptools wheel | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "离线安装 pip/setuptools/wheel 失败" }
-    & $venvPython -m pip install --no-index --find-links $wheels -r $requirements
+    & $venvPython -m pip install --no-index --find-links $wheels -r $requirements | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "离线安装运行时依赖失败" }
     $projectWheel = Get-ChildItem -Path $wheels -Filter "kb_service-*.whl" | Select-Object -First 1
     if (-not $projectWheel) { throw "wheels 中缺少 kb_service-*.whl" }
-    & $venvPython -m pip install --no-index --no-deps $projectWheel.FullName
+    & $venvPython -m pip install --no-index --no-deps $projectWheel.FullName | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "离线安装应用 wheel 失败" }
 
     $envSource = $EnvFile
@@ -246,7 +246,7 @@ function New-Release {
     Write-Host "校验安装结果 …"
     Push-Location $appDir
     try {
-        & $venvPython -c "import app.main; print('import-ok')"
+        & $venvPython -c "import app.main; print('import-ok')" | Out-Host
         if ($LASTEXITCODE -ne 0) { throw "安装后导入 app.main 失败" }
     } finally {
         Pop-Location
@@ -265,11 +265,17 @@ function Test-Placeholders {
 }
 
 function Invoke-DbInit {
-    param([string]$Release, [string]$Schema = "")
+    param([string]$Release, [string]$Schema = "", [switch]$SeedAuth)
     $appDir = Join-Path $Release "kb-service"
+    $store = Get-EnvValue -Path (Join-Path $appDir ".env") -Key "KB_STORE" -Default "json"
+    if ($store -ne "mysql") {
+        Write-Host "JSON 模式：跳过数据库初始化"
+        return
+    }
     $venvPython = Join-Path $appDir ".venv\Scripts\python.exe"
     $cliArgs = @("tools\offline_db_init.py")
     if ($Schema) { $cliArgs += @("--schema", $Schema) }
+    if ($SeedAuth) { $cliArgs += "--seed-auth" }
     Push-Location $appDir
     try {
         & $venvPython @cliArgs

@@ -82,3 +82,4 @@ Write-Host "旧版本保留在 releases\$(Split-Path -Leaf $oldRelease)"
 Write-Host "备份目录：$backup"
 if ($dump) { Write-Host "数据库备份：$dump" }
 Write-Host "如需回滚：scripts\rollback.ps1 -InstallDir `"$root`""
+exit 0

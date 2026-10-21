@@ -43,13 +43,18 @@ def _citation_ids(data: dict) -> set[str]:
 
 
 def test_same_question_different_roles_have_different_citations() -> None:
-    guest = _chat("校园网怎么开通", "访客", session_id="vf-role-guest")
-    staff = _chat("校园网怎么开通", "教职工", session_id="vf-role-staff")
+    # 用「差旅费」而非「校园网」：后者的示例切片全部是「全部」可见，
+    # 按真实语义检索后不同角色自然拿到同一批公共切片，测不出角色过滤。
+    question = "差旅费报销标准和流程"
+    guest = _chat(question, "访客", session_id="vf-role-guest")
+    staff = _chat(question, "教职工", session_id="vf-role-staff")
 
     guest_ids = _citation_ids(guest)
     staff_ids = _citation_ids(staff)
     assert guest_ids and staff_ids
     assert guest_ids != staff_ids, "不同身份的引用集合应不同（角色过滤生效）"
+    assert all(cid.startswith("D002-") for cid in staff_ids), "教职工应命中财务处差旅费切片"
+    assert not any(cid.startswith("D002-") for cid in guest_ids), "访客不应看到教职工报销切片"
 
     visible = {c.chunk_id: set(c.visible_roles or ["全部"]) for c in get_index().chunks}
     assert all(

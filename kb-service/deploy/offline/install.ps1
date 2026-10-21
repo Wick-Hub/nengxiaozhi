@@ -103,7 +103,7 @@ $appDir = Join-Path $release "kb-service"
 # ---- 数据库 ----
 if ($store -eq "mysql" -and -not $SkipDbInit) {
     Write-Host "初始化数据库（幂等）…"
-    Invoke-DbInit -Release $release -Schema (Join-Path $release "database\schema.sql")
+    Invoke-DbInit -Release $release -Schema (Join-Path $release "database\schema.sql") -SeedAuth
 } elseif ($store -eq "mysql") {
     Write-Warning "已跳过数据库初始化（-SkipDbInit）；部署前请执行 tools/offline_db_init.py"
 } else {
@@ -123,3 +123,4 @@ Write-Host "应用地址：http://127.0.0.1:$port/（健康检查 /api/health）
 Write-Host "生产配置：$envPath"
 if (-not $NoStart) { Write-Host "服务已启动；停止：current\kb-service\deploy\windows\stop.ps1" }
 Write-Host "注册开机自启（管理员 PowerShell）：current\kb-service\deploy\windows\install-service.ps1"
+exit 0

@@ -142,10 +142,15 @@ check_placeholders() {
 }
 
 db_init() {
-    local release=$1 schema=${2:-}
+    local release=$1 schema=${2:-} seed_auth=${3:-0}
     local app="$release/kb-service"
+    if [[ "$(env_get "$app/.env" KB_STORE json)" != "mysql" ]]; then
+        log "JSON 模式：跳过数据库初始化"
+        return 0
+    fi
     local args=(tools/offline_db_init.py)
     [[ -n "$schema" ]] && args+=(--schema "$schema")
+    [[ "$seed_auth" == "1" ]] && args+=(--seed-auth)
     ( cd "$app" && ./.venv/bin/python "${args[@]}" )
 }
 

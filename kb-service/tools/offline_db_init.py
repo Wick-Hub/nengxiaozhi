@@ -160,24 +160,38 @@ def run_migrations(dry_run: bool) -> list[str]:
         if dry_run:
             results.append(f"[dry-run] {name} {' '.join(extra)}".strip())
             continue
-        env = {**os.environ, "KB_STORE": "mysql"}
-        proc = subprocess.run(
-            [sys.executable, str(script), *extra],
-            cwd=SERVICE_DIR,
-            env=env,
-            text=True,
-            capture_output=True,
-        )
-        if proc.returncode != 0:
-            detail = (proc.stderr or proc.stdout or "").strip()[-1200:]
-            raise SystemExit(f"迁移失败：{name}\n{detail}")
-        results.append(f"{name}: ok")
+        results.append(f"{name}: {_run_script(script, extra)}")
     return results
+
+
+def _run_script(script, extra: tuple[str, ...]) -> str:
+    env = {**os.environ, "KB_STORE": "mysql"}
+    proc = subprocess.run(
+        [sys.executable, str(script), *extra],
+        cwd=SERVICE_DIR,
+        env=env,
+        text=True,
+        capture_output=True,
+    )
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout or "").strip()[-1200:]
+        raise SystemExit(f"脚本失败：{script.name}\n{detail}")
+    return "ok"
+
+
+def seed_auth(dry_run: bool) -> str:
+    script = SERVICE_DIR / "tools" / "seed_auth.py"
+    if not script.exists():
+        raise SystemExit(f"账号种子脚本缺失：{script}")
+    if dry_run:
+        return "[dry-run] seed_auth.py（角色 + 演示账号）"
+    return f"seed_auth.py: {_run_script(script, ())}"
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="离线安装数据库初始化（任务 5.2）")
     parser.add_argument("--schema", default="", help="基础结构 SQL；仅在目标库为空时执行")
+    parser.add_argument("--seed-auth", action="store_true", help="写入 RBAC 角色与演示账号（仅全新安装）")
     parser.add_argument("--skip-migrations", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--list", action="store_true", help="只列出迁移顺序")
@@ -196,6 +210,8 @@ def main() -> None:
     if not args.skip_migrations:
         for line in run_migrations(args.dry_run):
             print(line)
+    if args.seed_auth:
+        print(seed_auth(args.dry_run))
     print("数据库初始化完成。" if not args.dry_run else "（dry-run 结束）")
 
 

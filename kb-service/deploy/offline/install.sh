@@ -92,7 +92,7 @@ PY
 
 if [[ "$STORE" == "mysql" && "$SKIP_DB_INIT" == "0" ]]; then
     log "初始化数据库（幂等）…"
-    db_init "$RELEASE" "$RELEASE/database/schema.sql"
+    db_init "$RELEASE" "$RELEASE/database/schema.sql" 1
 else
     log "跳过数据库初始化（KB_STORE=$STORE）"
 fi
