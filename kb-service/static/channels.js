@@ -327,7 +327,7 @@
     $('ch-f-welcome').value = item ? (item.welcomeText || '') : '';
     const theme = (item && item.themeConfig) || {};
     state.editingTheme = theme;
-    $('ch-f-color').value = /^#[0-9a-f]{6}$/i.test(theme.primaryColor || '') ? theme.primaryColor : '#5b8cff';
+    $('ch-f-color').value = /^#[0-9a-f]{6}$/i.test(theme.primaryColor || '') ? theme.primaryColor : '#3f8d80';
     $('ch-f-position').value = theme.position === 'left' ? 'left' : 'right';
     $('ch-f-launcher').value = theme.launcherText || '';
     $('ch-f-assistant').value = theme.assistantName || '';

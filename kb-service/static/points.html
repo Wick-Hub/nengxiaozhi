@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="points.css">
   <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
   <header class="topbar">
@@ -70,6 +71,7 @@
         <h3>知识点<span class="count" id="pt-count"></span></h3>
         <div class="filters"><span class="muted" id="pt-hint"></span></div>
       </div>
+      <div class="table-scroll">
       <table class="docs pt-table">
         <thead>
           <tr>
@@ -85,6 +87,7 @@
         </thead>
         <tbody id="pt-body"></tbody>
       </table>
+      </div>
       <div class="empty" id="pt-empty" hidden>暂无知识点</div>
       <div class="pager" id="pt-pager" hidden>
         <button class="btn-ghost" id="pt-prev">上一页</button>

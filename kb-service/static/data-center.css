@@ -8,8 +8,8 @@
 }
 
 .dc-kpi {
-  background: var(--surface-2, #f6f8fb);
-  border: 1px solid var(--border, #e3e8ef);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 12px 14px;
   display: flex;
@@ -20,7 +20,7 @@
 
 .dc-kpi b {
   font-size: 18px;
-  color: var(--text, #1f2937);
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -28,7 +28,7 @@
 
 .dc-kpi span {
   font-size: 12px;
-  color: var(--muted, #6b7280);
+  color: var(--muted);
 }
 
 .dc-actions {
@@ -55,30 +55,30 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--muted, #6b7280);
+  color: var(--muted);
 }
 
 .dc-action-row input[type="date"],
 .dc-action-row select {
   height: 32px;
   padding: 0 8px;
-  border: 1px solid var(--border, #e3e8ef);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--bg-panel-solid);
   font-size: 13px;
 }
 
 .dc-hint {
   margin: 10px 0 0;
   font-size: 12px;
-  color: var(--muted, #6b7280);
+  color: var(--muted);
 }
 
 .dc-tabs {
   display: flex;
   gap: 6px;
   padding: 10px 16px 0;
-  border-bottom: 1px solid var(--border, #e3e8ef);
+  border-bottom: 1px solid var(--border);
 }
 
 .dc-tab {
@@ -86,14 +86,14 @@
   background: transparent;
   padding: 10px 14px;
   font-size: 14px;
-  color: var(--muted, #6b7280);
+  color: var(--muted);
   cursor: pointer;
   border-bottom: 2px solid transparent;
 }
 
 .dc-tab.active {
-  color: var(--primary, #2563eb);
-  border-bottom-color: var(--primary, #2563eb);
+  color: var(--primary);
+  border-bottom-color: var(--primary);
   font-weight: 600;
 }
 
@@ -119,19 +119,19 @@
 .dc-table th,
 .dc-table td {
   padding: 9px 10px;
-  border-bottom: 1px solid var(--border, #eef1f6);
+  border-bottom: 1px solid var(--border);
   text-align: left;
   white-space: nowrap;
 }
 
 .dc-table th {
   font-weight: 600;
-  color: var(--muted, #6b7280);
-  background: var(--surface-2, #f8fafc);
+  color: var(--muted);
+  background: var(--surface-2);
 }
 
 .dc-table tbody tr:hover {
-  background: #f8fbff;
+  background: rgba(201,168,106,.05);
 }
 
 .dc-mono {
@@ -147,7 +147,7 @@
 .dc-detail-mask {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.35);
+  background: rgba(4,9,10, 0.35);
   z-index: 40;
 }
 
@@ -157,9 +157,9 @@
   right: 0;
   width: min(720px, 92vw);
   height: 100vh;
-  background: #fff;
+  background: var(--bg-panel-solid);
   z-index: 41;
-  box-shadow: -12px 0 30px rgba(15, 23, 42, 0.18);
+  box-shadow: -12px 0 30px rgba(4,9,10, 0.18);
   display: flex;
   flex-direction: column;
 }
@@ -170,7 +170,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--border, #e3e8ef);
+  border-bottom: 1px solid var(--border);
 }
 
 .dc-detail-head h3 {
@@ -188,8 +188,8 @@
   overflow: auto;
   font-size: 12px;
   line-height: 1.55;
-  background: #0f172a;
-  color: #e2e8f0;
+  background: #091214;
+  color: #c4bcae;
   white-space: pre-wrap;
   word-break: break-word;
 }

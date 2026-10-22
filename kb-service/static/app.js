@@ -1037,7 +1037,6 @@
     if (mods.feedback) addPortalEntry(w, theme.feedback, '意见反馈');
 
     chatEl.appendChild(w);
-    scrollDown();
   }
 
   function addMeta(bubble, meta) {

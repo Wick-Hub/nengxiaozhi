@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="unrecognized.css">
   <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
   <header class="topbar">
@@ -95,6 +96,7 @@
         <h3>问题聚合<span class="count" id="un-count"></span></h3>
         <div class="filters"><span class="muted" id="un-hint"></span></div>
       </div>
+      <div class="table-scroll">
       <table class="docs un-table">
         <thead>
           <tr>
@@ -111,6 +113,7 @@
         </thead>
         <tbody id="un-body"></tbody>
       </table>
+      </div>
       <div class="empty" id="un-empty" hidden>暂无未识别问题</div>
       <div class="pager" id="un-pager" hidden>
         <button class="btn-ghost" id="un-prev">上一页</button>

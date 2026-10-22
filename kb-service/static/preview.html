@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="admin.css">
   <link rel="stylesheet" href="preview.css">
   <link rel="stylesheet" href="auth.css">
+  <link rel="stylesheet" href="theme.css">
 </head>
 <body>
   <header class="topbar">
@@ -81,12 +82,14 @@
 
     <section class="card" id="picker" hidden>
       <h3>选择要预览的文档 <span class="count" id="picker-count"></span></h3>
+      <div class="table-scroll">
       <table class="docs">
         <thead>
           <tr><th>#</th><th>标题</th><th>部门</th><th>类型</th><th>状态</th><th>切片</th><th>操作</th></tr>
         </thead>
         <tbody id="picker-body"></tbody>
       </table>
+      </div>
       <div class="empty" id="picker-empty" hidden>暂无文档</div>
     </section>
   </main>
