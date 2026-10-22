@@ -172,7 +172,7 @@ python -m app.main
 > 5.6 安全加固验收：`tools/verify_security_5_6.py`（`AUTH_ENABLED=true` / 限流开启 / MySQL），
 > **PASS 50 / WARN 0 / FAIL 0**，报告 `artifacts/acceptance/security-report.md`；覆盖 401/403
 > 三态、AES/JWT 轮换、管理/登录/问答限流、敏感词、操作日志脱敏、RBAC 与生产配置基线。
-> 最新测试基线（2026-10-21）：`pytest` **1251 passed / 75 skipped**（共 1326 条；
+> 最新测试基线（2026-10-22）：`pytest` **1251 passed / 75 skipped**（254s，共 1326 条；
 > tokenizers 就绪后原先跳过的 7 项嵌入/精排用例转为真实执行）；
 > `tools/verify_*.py` **70 个**；5.2 离线包验收 **57 PASS / 0 FAIL**
 > （安装 → 升级 → 回滚 → 数据留存，含 BGE 512 维加载）；5.3 压测报告
@@ -1139,9 +1139,11 @@ python -m app.main
     生产配置、初始账号、升级/回滚、故障排查）。
   - ⚠ **边界**：Linux 安装脚本已实现但本机无 Linux 环境，动态验收在 Windows 完成；
     正式交付前需在目标 Linux 机按手册复跑安装/升级/回滚。Docker 镜像导出为可选步骤。
-  - ✅ **5.6 后重建（2026-10-21 16:45）**：`nengxiaozhi-offline-0.1.0-20261021-164520-5.6`
-    （431 文件 / 775 MB）已纳入 5.6 限流、CORS 模板与同步元数据修复，
-    `verify_offline_bundle.py` **57 PASS / 0 FAIL / 0 WARN**（`artifacts/verify-offline-5.6.log`）。
+  - ✅ **5.6.1 交付包（2026-10-22 重建）**：`dist/offline/nengxiaozhi-offline-0.1.0-<构建时间戳>-5.6.1`
+    （431 文件 / ≈775 MB），纳入网关默认配置（`LLM_MODEL` 留空自动取 `/v1/models` 首个）
+    与 seed `modelCode=default` 修复；`BUILD-INFO.json` 记录源码 commit / commitDirty，
+    包根 `COMMIT.txt` 可与仓库对账；验收标准同 5.6，结果见
+    `artifacts/acceptance/交付前检查清单.md`（日志 `artifacts/verify-offline-5.6.1.log`）。
 
 - **任务 5.3 性能与容量验证** ✅
   - **工具**：`tools/perf_load.py` 同时支持检索链微基准（嵌入/召回/精排/完整 retrieve + 进程

@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     # gateway（默认，唯一模型来源=网关）| local（直连任务 4.8 启用的本地 OpenAI 兼容模型）
     llm_provider: str = "gateway"
     llm_api_key: str = ""
-    llm_base_url: str = "https://api.deepseek.com/v1"
+    llm_base_url: str = "http://127.0.0.1:8088/v1"
     llm_model: str = ""
     llm_temperature: float = 0.3
     llm_max_tokens: int = 1024

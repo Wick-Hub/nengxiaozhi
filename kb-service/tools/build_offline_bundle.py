@@ -26,10 +26,9 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 import tempfile
 import tomllib
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 SERVICE_DIR = Path(__file__).resolve().parent.parent
@@ -71,6 +70,28 @@ def _sha256(path: Path) -> str:
         for block in iter(lambda: fh.read(1024 * 1024), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _git_info() -> dict:
+    """记录构建对应的源码提交，便于交付包与仓库对账。"""
+    try:
+        commit = subprocess.run(
+            ["git", "-C", str(WORKSPACE), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+        dirty = bool(
+            subprocess.run(
+                ["git", "-C", str(WORKSPACE), "status", "--porcelain"],
+                capture_output=True,
+                text=True,
+                check=True,
+            ).stdout.strip()
+        )
+    except (OSError, subprocess.CalledProcessError):
+        return {"commit": "", "commitShort": "", "commitDirty": None}
+    return {"commit": commit, "commitShort": commit[:12], "commitDirty": dirty}
 
 
 def _link_or_copy(src: Path, dst: Path) -> None:
@@ -265,7 +286,7 @@ def _write_manifest(root: Path) -> int:
             continue
         files.append({"path": rel, "bytes": item.stat().st_size, "sha256": _sha256(item)})
     payload = {
-        "generatedAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "generatedAt": datetime.now(UTC).isoformat(timespec="seconds"),
         "fileCount": len(files),
         "totalBytes": sum(f["bytes"] for f in files),
         "files": files,
@@ -321,11 +342,17 @@ def build(args: argparse.Namespace) -> Path:
     _copy_scripts(root / "scripts")
     shutil.copy2(OFFLINE_DIR / "OFFLINE-INSTALL.md", root / "OFFLINE-INSTALL.md")
 
+    git = _git_info()
+    if git["commitDirty"]:
+        _log("警告：工作区有未提交改动，交付包内容与 commit 不完全一致")
     info = {
         "product": "能小智校园 AI 助手平台",
         "version": version,
         "bundleLabel": args.label or "",
-        "builtAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "builtAt": datetime.now(UTC).isoformat(timespec="seconds"),
+        "commit": git["commit"],
+        "commitShort": git["commitShort"],
+        "commitDirty": git["commitDirty"],
         "targetPython": args.python_version,
         "targetPlatform": args.platform or "current",
         "includesModels": bool(models),
@@ -337,6 +364,8 @@ def build(args: argparse.Namespace) -> Path:
     (root / "BUILD-INFO.json").write_text(
         json.dumps(info, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+    if git["commit"]:
+        (root / "COMMIT.txt").write_text(f"{git['commit']}\n", encoding="utf-8")
     count = _write_manifest(root)
     total = sum(p.stat().st_size for p in root.rglob("*") if p.is_file())
     _log(f"完成：{count} 个文件，{total / 1024 / 1024:.0f} MB")

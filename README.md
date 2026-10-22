@@ -93,7 +93,7 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```ini
 LLM_BASE_URL=http://127.0.0.1:8088/v1   # 网关地址
 LLM_API_KEY=sk-campus-****              # 网关下发的业务 Key
-LLM_MODEL=deepseek-v4-1-flash-economy-261017
+LLM_MODEL=                              # 留空自动取网关 /v1/models 首个模型
 ```
 
 网关 `campus-ai-gateway` 需在外部单独部署（Postgres + Redis）。业务 Key 由网关控制台创建，**明文只显示一次**；Key 的可用性取决于租户启用、Key 状态、授权模型与路由渠道。
@@ -110,7 +110,7 @@ python tools/verify_security_5_6.py            # 安全加固验收（5.6）
 python tools/verify_offline_bundle.py          # 离线交付包验收（5.2）
 ```
 
-**最近一次基线（2026-10-21）**：`1251 passed / 75 skipped / 0 failed`；安全加固 `PASS 50 / WARN 0 / FAIL 0`；离线包 `57 PASS / 0 FAIL / 0 WARN`（含 install→upgrade→rollback）；验收彩排 `9/9 PASS`。日志见 `kb-service/artifacts/`。
+**最近一次基线（2026-10-22）**：`1251 passed / 75 skipped / 0 failed`（254s）；安全加固 `PASS 50 / WARN 0 / FAIL 0`；离线包 `57 PASS / 0 FAIL / 0 WARN`（含 install→upgrade→rollback）；验收彩排 `9/9 PASS`。日志见 `kb-service/artifacts/`。
 
 ---
 
